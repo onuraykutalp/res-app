@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Reservation {
+  id           String    @id @default(cuid())
+  name         String
+  date         DateTime
+  fromWho      Client    @relation(fields: [fromWhoId], references: [id])
+  fromWhoId    String
+  resTable     String
+  price        Float
+  companyPrice Float
+  agency       String?
+  m1           Float
+  m2           Float
+  m3           Float
+  v1           Float
+  v2           Float
+  total        Float
+  room         String?
+  description  String?
+  payment      String
+  resTaker     Employee  @relation(fields: [resTakerId], references: [id])
+  resTakerId   String
+}
+
+model Client {
+  id          String     @id @default(cuid())
+  company     String
+  clientType  String
+  currency    String
+  tax         String?
+  limit       Int
+  createdAt   DateTime   @default(now())
+
+  whoCreated  Employee   @relation("ClientCreator", fields: [whoCreatedId], references: [id])
+  whoCreatedId String
+
+  whoUpdated  Employee?  @relation("ClientUpdater", fields: [whoUpdatedId], references: [id])
+  whoUpdatedId String?
+
+  lastUpdate  DateTime?    // <-- Bunu ekle
+
+  reservations Reservation[]
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  name      String
+  lastname  String
+  phone     BigInt
+  username  String   @unique
+  password  String   // ← bunu ekle
+  group     EmployeeGroup @relation(fields: [groupId], references: [id])
+  groupId   String
+
+  createdClients Client[] @relation("ClientCreator")
+  updatedClients Client[] @relation("ClientUpdater")
+
+  takenReservations Reservation[]
+}
+
+model EmployeeGroup {
+  id         String     @id @default(cuid())
+  groupName  String     @unique
+  employees  Employee[]
+}
