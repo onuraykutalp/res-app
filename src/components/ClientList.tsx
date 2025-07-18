@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { useClientStore } from "../store/useClientStore";
 import { Client } from "../types/Client";
+import { useAuthStore } from "../store/useAuthStore";  // auth store'u import et
 
 const ClientList = () => {
-  const { clients, fetchClients, deleteClient, updateClient } = useClientStore();
+  const clients = useClientStore((state) => state.clients);
+const fetchClients = useClientStore((state) => state.fetchClients);
+const deleteClient = useClientStore((state) => state.deleteClient);
+const updateClient = useClientStore((state) => state.updateClient);
+  const user = useAuthStore((state) => state.user);  // login olan kullanıcı
+
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     company: "",
@@ -11,7 +17,7 @@ const ClientList = () => {
     currency: "",
     tax: "",
     limit: 0,
-    whoUpdatedId: "", // giriş yapan kullanıcının ID’si dinamik verilecek
+    whoUpdatedId: "",  // burayı boş başlatıyoruz
   });
 
   useEffect(() => {
@@ -26,48 +32,66 @@ const ClientList = () => {
       currency: client.currency,
       tax: client.tax || "",
       limit: client.limit,
-      whoUpdatedId: "giris_yapan_user_id", // bunu sen giriş yapan kullanıcıdan almalısın
+      whoUpdatedId: user?.id || "",  // login olan kullanıcının id'si
     });
   };
 
   const handleSave = async (id: string) => {
+    if (!user) {
+      alert("Öncelikle giriş yapmalısınız!");
+      return;
+    }
     await updateClient(id, editForm);
     setEditingClientId(null);
   };
+
+  // JSX kısmı aynı kalabilir
 
   return (
     <div className="mt-6">
       <h2 className="text-xl font-semibold mb-4">Müşteri Listesi</h2>
       <ul className="space-y-3">
         {clients.map((client) => (
-          <li key={client.id} className="bg-white p-4 rounded shadow flex flex-col md:flex-row justify-between gap-4">
+          <li
+            key={client.id}
+            className="bg-white p-4 rounded shadow flex flex-col md:flex-row justify-between gap-4"
+          >
             {editingClientId === client.id ? (
-              // Edit Mode
               <div className="flex flex-col md:flex-row gap-3 w-full">
                 <input
                   value={editForm.company}
-                  onChange={(e) => setEditForm({ ...editForm, company: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, company: e.target.value })
+                  }
                   className="border px-2 py-1 rounded w-full md:w-1/5"
                 />
                 <input
                   value={editForm.clientType}
-                  onChange={(e) => setEditForm({ ...editForm, clientType: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, clientType: e.target.value })
+                  }
                   className="border px-2 py-1 rounded w-full md:w-1/5"
                 />
                 <input
                   value={editForm.currency}
-                  onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, currency: e.target.value })
+                  }
                   className="border px-2 py-1 rounded w-full md:w-1/5"
                 />
                 <input
                   value={editForm.tax}
-                  onChange={(e) => setEditForm({ ...editForm, tax: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, tax: e.target.value })
+                  }
                   className="border px-2 py-1 rounded w-full md:w-1/5"
                 />
                 <input
                   type="number"
                   value={editForm.limit}
-                  onChange={(e) => setEditForm({ ...editForm, limit: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, limit: Number(e.target.value) })
+                  }
                   className="border px-2 py-1 rounded w-full md:w-1/6"
                 />
                 <div className="flex gap-2">
@@ -86,7 +110,6 @@ const ClientList = () => {
                 </div>
               </div>
             ) : (
-              // Normal View Mode
               <div className="flex justify-between items-center w-full gap-3">
                 <div className="flex flex-col">
                   <span className="font-medium">{client.company}</span>

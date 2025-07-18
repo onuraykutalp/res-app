@@ -7,67 +7,289 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Reservation {
-  id           String    @id @default(cuid())
-  name         String
-  date         DateTime
-  fromWho      Client    @relation(fields: [fromWhoId], references: [id])
-  fromWhoId    String
-  resTable     String
-  price        Float
-  companyPrice Float
-  agency       String?
-  m1           Float
-  m2           Float
-  m3           Float
-  v1           Float
-  v2           Float
-  total        Float
-  room         String?
-  description  String?
-  payment      String
-  resTaker     Employee  @relation(fields: [resTakerId], references: [id])
-  resTakerId   String
+// ======================= EMPLOYEE =======================
+model EmployeeGroup {
+  id        String     @id @default(uuid())
+  groupName String
+  employees Employee[] @relation("EmployeeGroupEmployees")
+
+  @@map("employee_groups")
 }
 
+model Employee {
+  id       String        @id @default(uuid())
+  groupId  String
+  group    EmployeeGroup @relation("EmployeeGroupEmployees", fields: [groupId], references: [id])
+  name     String
+  lastname String
+  phone    Int
+  username String @unique
+  password String?
+
+  createdClients         Client[]      @relation("CreatedClients")
+  updatedClients         Client[]      @relation("UpdatedClients")
+  createdSuppliers       Supplier[]    @relation("CreatedSuppliers")
+  updatedSuppliers       Supplier[]    @relation("UpdatedSuppliers")
+    takenReservations      Reservation[] @relation("ReservationResTaker")
+  authorizedReservations Reservation[] @relation("ReservationAuthorized")
+}
+
+// ======================= CLIENT =======================
 model Client {
-  id          String     @id @default(cuid())
-  company     String
-  clientType  String
-  currency    String
-  tax         String?
-  limit       Int
-  createdAt   DateTime   @default(now())
-
-  whoCreated  Employee   @relation("ClientCreator", fields: [whoCreatedId], references: [id])
+  id           String   @id @default(uuid())
+  company      String
+  clientType   String
+  currency     String
+  tax          String?
+  limit        Int
+  createdAt    DateTime @default(now())
   whoCreatedId String
+  whoCreated   Employee @relation("CreatedClients", fields: [whoCreatedId], references: [id])
 
-  whoUpdated  Employee?  @relation("ClientUpdater", fields: [whoUpdatedId], references: [id])
+  lastUpdate   DateTime?
   whoUpdatedId String?
-
-  lastUpdate  DateTime?    // <-- Bunu ekle
+  whoUpdated   Employee? @relation("UpdatedClients", fields: [whoUpdatedId], references: [id])
 
   reservations Reservation[]
 }
 
-model Employee {
-  id        String   @id @default(cuid())
-  name      String
-  lastname  String
-  phone     BigInt
-  username  String   @unique
-  password  String   // ← bunu ekle
-  group     EmployeeGroup @relation(fields: [groupId], references: [id])
-  groupId   String
-
-  createdClients Client[] @relation("ClientCreator")
-  updatedClients Client[] @relation("ClientUpdater")
-
-  takenReservations Reservation[]
+// ======================= SUPPLIER =======================
+model Supplier {
+  id           String   @id @default(uuid())
+  name         String
+  supplierType String
+  currency     String
+  tax          String?
+  limit        Int?
+  createdAt    DateTime @default(now())
+  createdById  String
+  createdBy    Employee @relation("CreatedSuppliers", fields: [createdById], references: [id])
+  updatedById  String
+  updatedBy    Employee @relation("UpdatedSuppliers", fields: [updatedById], references: [id])
+  lastUpdate   DateTime
 }
 
-model EmployeeGroup {
-  id         String     @id @default(cuid())
-  groupName  String     @unique
-  employees  Employee[]
+// ======================= COMPANY RATE =======================
+model CompanyRate {
+  id          String   @id @default(uuid())
+  company     String
+  m1          Float
+  m2          Float
+  m3          Float
+  v1          Float
+  v2          Float
+  currency    String
+  startDate   DateTime
+  endDate     DateTime
+  description String?
+  createdAt   DateTime @default(now())
+
+  reservations Reservation[]
+}
+
+// ======================= DRIVER =======================
+model Driver {
+  id         String  @id @default(uuid())
+  driverName String
+  phone      String
+  license    String
+  capacity   Int
+  brand      String?
+  color      String?
+
+  transfers Transfer[]
+}
+
+// ======================= EXPENSE =======================
+model ExpenseGroup {
+  id               String   @id @default(uuid())
+  expenseGroupName String
+  createdAt        DateTime @default(now())
+
+  expenses Expense[]
+}
+
+model Expense {
+  id             String       @id @default(uuid())
+  expenseGroupId String
+  expenseGroup   ExpenseGroup @relation(fields: [expenseGroupId], references: [id])
+  expenseName    String
+  ship           Boolean
+  accountant     Boolean
+  createdAt      DateTime     @default(now())
+}
+
+// ======================= INCOMES =======================
+model GeneralIncome {
+  id              String   @id @default(uuid())
+  menuName        String
+  currency        String
+  flierPrice      Float
+  otelPrice       Float
+  fiveAndFarPrice Float
+  agencyPrice     Float
+  guidePrice      Float
+  individualPrice Float
+  companyPrice    Float
+  onlinePrice     Float
+  othersPrice     Float
+  startedAt       DateTime
+  endedAt         DateTime
+  createdAt       DateTime @default(now())
+}
+
+model Income {
+  incomeId   String   @id @default(uuid())
+  incomeName String
+  incomeTax  Float
+  ship       Boolean
+  accountant Boolean
+  createdAt  DateTime @default(now())
+}
+
+model LocationIncome {
+  id              String   @id @default(uuid())
+  menuName        String
+  currency        String
+  flierPrice      Float
+  otelPrice       Float
+  fiveAndFarPrice Float
+  agencyPrice     Float
+  guidePrice      Float
+  individualPrice Float
+  companyPrice    Float
+  onlinePrice     Float
+  othersPrice     Float
+  startedAt       DateTime
+  endedAt         DateTime
+  createdAt       DateTime @default(now())
+}
+
+model SubIncome {
+  id              String   @id @default(uuid())
+  menuName        String
+  currency        String
+  flierPrice      Float
+  otelPrice       Float
+  fiveAndFarPrice Float
+  agencyPrice     Float
+  guidePrice      Float
+  individualPrice Float
+  companyPrice    Float
+  onlinePrice     Float
+  othersPrice     Float
+  startedAt       DateTime
+  endedAt         DateTime
+  createdAt       DateTime @default(now())
+}
+
+// ======================= SALOON =======================
+model Saloon {
+  id          String   @id @default(uuid())
+  ship        String
+  saloonName  String
+  description String?
+  createdAt   DateTime @default(now())
+
+  resTables    ResTable[]
+  reservations Reservation[]
+}
+
+// ======================= RES TABLE =======================
+model ResTable {
+  id       String   @id @default(uuid())
+  name     String
+  capacity Int
+  saloonId String
+  saloon   Saloon   @relation(fields: [saloonId], references: [id])
+
+  reservations Reservation[]
+}
+
+// ======================= TRANSFER =======================
+model TransferLocation {
+  id           String  @id @default(uuid())
+  locationName String
+  time         String
+  description  String?
+
+  transferPoints TransferPoint[]
+  transfers      Transfer[]
+}
+
+model TransferPoint {
+  id                String           @id @default(uuid())
+  transferPointName String
+  time              String
+  description       String?
+  createdAt         DateTime         @default(now())
+  locationId        String
+  location          TransferLocation @relation(fields: [locationId], references: [id])
+
+  arrivalReservations Reservation[] @relation("ReservationArrivalTransfer")
+  returnReservations  Reservation[] @relation("ReservationReturnTransfer")
+
+  transfers Transfer[]
+}
+
+model Transfer {
+  id                 String   @id @default(uuid())
+  personQuantity     Int
+  time               String
+  transferDesc       String?
+  transferLocationId String
+  transferPointId    String
+  driverId           String?   // opsiyonel
+  reservationId      String?   // opsiyonel çünkü transfer bağımsız olabilir
+
+  transferLocation   TransferLocation @relation(fields: [transferLocationId], references: [id])
+  transferPoint      TransferPoint    @relation(fields: [transferPointId], references: [id])
+  driver             Driver?          @relation(fields: [driverId], references: [id])
+  reservation        Reservation?     @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+}
+
+// ======================= RESERVATION =======================
+model Reservation {
+  id                String    @id @default(uuid())
+  date              DateTime
+  paymentType       String
+  room              String?
+  voucherNo         String?
+  nationality       String
+  description       String?
+  transferNote      String?
+  ship              String
+  fromWhoId         String?  // opsiyonel
+  resTakerId        String
+  authorizedId      String
+  arrivalTransferId String?  
+  returnTransferId  String?  
+  saloonId          String
+  resTableId        String
+  menuId            String
+
+  // Yeni menü adet ve fiyat alanları (hepsi opsiyonel yapabiliriz, ya da default 0)
+  m1     Int     @default(0)
+  m1Price Float  @default(0)
+  m2     Int     @default(0)
+  m2Price Float  @default(0)
+  m3     Int     @default(0)
+  m3Price Float  @default(0)
+  v1     Int     @default(0)
+  v1Price Float  @default(0)
+  v2     Int     @default(0)
+  v2Price Float  @default(0)
+
+  price             Float
+
+  fromWho           Client?    @relation(fields: [fromWhoId], references: [id])
+  resTaker          Employee   @relation("ReservationResTaker", fields: [resTakerId], references: [id])
+  authorized        Employee   @relation("ReservationAuthorized", fields: [authorizedId], references: [id])
+  arrivalTransfer   TransferPoint? @relation("ReservationArrivalTransfer", fields: [arrivalTransferId], references: [id])
+  returnTransfer    TransferPoint? @relation("ReservationReturnTransfer", fields: [returnTransferId], references: [id])
+  saloon            Saloon     @relation(fields: [saloonId], references: [id])
+  resTable          ResTable   @relation(fields: [resTableId], references: [id])
+  menu              CompanyRate @relation(fields: [menuId], references: [id])
+
+  transfers         Transfer[]  // 1 Reservation’a birden fazla Transfer olabilir
 }

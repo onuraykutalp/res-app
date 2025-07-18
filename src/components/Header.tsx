@@ -10,6 +10,11 @@ const Header = () => {
     { path: '/app/employees', label: 'Personel' },
     { path: '/app/employee-groups', label: 'Personel Grupları' },
     { path: '/app/clients', label: 'Müşteriler' },
+    { path: '/app/saloons', label: 'Salonlar' },
+    { path: '/app/tables', label: 'Masa Düzeni' },
+    { path: '/app/transfer-locations', label: 'Bölgeler' },
+    { path: '/app/company-rates', label: 'Şirket Fiyatları' },
+    { path: '/app/general-income', label: 'Genel Fiyatlar' },
   ];
 
   return (

@@ -1,17 +1,16 @@
 import { create } from "zustand";
 import { Employee } from "../types/Employee";
 
-
 interface AuthState {
   user: Employee | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
-  isLoggedIn: () => boolean; // fonksiyon olarak tanımla
+  isLoggedIn: () => boolean;
   error: string | null;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
+  user: JSON.parse(localStorage.getItem('user') || 'null'),
   error: null,
   login: async (username, password) => {
     try {
@@ -28,11 +27,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       const data = await res.json();
       set({ user: data.user, error: null });
+      localStorage.setItem('user', JSON.stringify(data.user));  // Kullanıcıyı kaydet
     } catch (error: any) {
       set({ error: error.message });
     }
   },
-  logout: () => set({ user: null, error: null }),
+  logout: () => {
+    localStorage.removeItem('user');  // Çıkışta temizle
+    set({ user: null, error: null });
+  },
   isLoggedIn: () => {
     return get().user !== null;
   }

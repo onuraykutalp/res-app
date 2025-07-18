@@ -1,264 +1,257 @@
-import React, { useState, useEffect } from 'react';
-import { useReservationStore } from '../store/useReservationStore';
-import { Reservation, ReservationInput } from '../types/Reservation';
-import { Client } from '../types/Client';
-import { Employee } from '../types/Employee';
-import { motion } from 'motion/react';
-import { Switch } from '@mui/material';
+import { useEffect, useState } from "react";
+import { useClientStore } from "../store/useClientStore";
+import { useEmployeeStore } from "../store/useEmployeeStore";
+import { useSaloonStore } from "../store/useSaloonStore";
+import { useResTableStore } from "../store/useResTableStore";
+import { useTransferPointStore } from "../store/useTransferPointStore";
+import { useReservationStore } from "../store/useReservationStore";
 
-export const ReservationForm: React.FC = () => {
-  const addReservation = useReservationStore(state => state.addReservation);
+interface ReservationFormData {
+  name: string;
+  phone: string;
+  date: string;
+  clientId: string;
+  resTakerId: string;
+  fromWhoId: string;
+  saloonId: string;
+  resTableId: string;
+  arrivalTransferPointId: string;
+  returnTransferPointId: string;
+  notes: string;
+  paymentType: string;      // yeni alan
+  nationality: string;      // yeni alan
+  ship: string;             // yeni alan
+  authorizedId: string;     // yeni alan
+  menuId: string;           // yeni alan
+}
 
-  // Client ve Employee listeleri için state
-  const [clients, setClients] = useState<Client[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
+export default function ReservationForm() {
+  const [formData, setFormData] = useState<ReservationFormData>({
+    name: "",
+    phone: "",
+    date: "",
+    clientId: "",
+    resTakerId: "",
+    fromWhoId: "",
+    saloonId: "",
+    resTableId: "",
+    arrivalTransferPointId: "",
+    returnTransferPointId: "",
+    notes: "",
+    paymentType: "",               // EKLENDİ
+    nationality: "",               // EKLENDİ
+    ship: "",                      // EKLENDİ
+    authorizedId: "",              // EKLENDİ
+    menuId: "",                    // EKLENDİ
+  });
 
-  // Form state
-  const [name, setName] = useState('');
-  const [date, setDate] = useState('');
-  const [fromWho, setFromWho] = useState('');       // client id
-  const [resTable, setResTable] = useState('');
-  const [price, setPrice] = useState<number>(0);
-  const [companyPrice, setCompanyPrice] = useState<number>(0);
-  const [agency, setAgency] = useState<string>('');
-  const [m1, setM1] = useState<number>(0);
-  const [m2, setM2] = useState<number>(0);
-  const [m3, setM3] = useState<number>(0);
-  const [v1, setV1] = useState<number>(0);
-  const [v2, setV2] = useState<number>(0);
-  const [total, setTotal] = useState<number>(0);
-  const [room, setRoom] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [payment, setPayment] = useState('');
-  const [resTaker, setResTaker] = useState('');     // employee id
+  const { clients, fetchClients } = useClientStore();
+  const { employees, fetchEmployees } = useEmployeeStore();
+  const { saloons, fetchSaloons } = useSaloonStore();
+  const { resTables, fetchResTables } = useResTableStore();
+  const { transferPoints, fetchTransferPoints } = useTransferPointStore();
+  const { createReservation } = useReservationStore();
 
-  const [reservationForm, setReservationForm] = useState(false);
-
-  // Sayfa açılırken client ve employee verilerini çek
   useEffect(() => {
-    async function fetchClients() {
-      const res = await fetch('http://localhost:3001/api/clients');
-      const data = await res.json();
-      setClients(data);
-    }
-    async function fetchEmployees() {
-      const res = await fetch('http://localhost:3001/api/employees');
-      const data = await res.json();
-      setEmployees(data);
-    }
     fetchClients();
     fetchEmployees();
+    fetchSaloons();
+    fetchTransferPoints();
+    fetchResTables();
   }, []);
 
-  const openReservationForm = () => setReservationForm(true);
-  const closeReservationForm = () => setReservationForm(false);
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !date || !fromWho || !resTable || !price || !payment || !resTaker) {
-      alert('Lütfen zorunlu alanları doldurun!');
-      return;
-    }
-
-    const reservationInput: ReservationInput = {
-      name,
-      date,
-      fromWho,   // sadece id gönderiyoruz
-      resTable,
-      price,
-      companyPrice,
-      agency: agency || undefined,
-      m1,
-      m2,
-      m3,
-      v1,
-      v2,
-      total,
-      room: room || undefined,
-      description: description || undefined,
-      payment,
-      resTaker,  // sadece id gönderiyoruz
-    };
-
     try {
-      const response = await fetch('http://localhost:3001/api/reservations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reservationInput),
+      const payload = {
+        ...formData,
+        // tarih formatını ISO string'e çevir
+        date: new Date(formData.date).toISOString(),
+      };
+
+      await createReservation(payload); // bu fonksiyon ID'lerle çalışmalı
+
+      setFormData({
+        name: "",
+        phone: "",
+        date: "",
+        clientId: "",
+        resTakerId: "",
+        fromWhoId: "",
+        saloonId: "",
+        resTableId: "",
+        arrivalTransferPointId: "",
+        returnTransferPointId: "",
+        notes: "",
+
+        paymentType: "",
+        nationality: "",
+        ship: "",
+        authorizedId: "",
+        menuId: "",
       });
-
-      const savedReservation: Reservation = await response.json();
-
-      if (response.ok) {
-        addReservation(savedReservation);
-        // formu temizle
-        setName('');
-        setDate('');
-        setFromWho('');
-        setResTable('');
-        setPrice(0);
-        setCompanyPrice(0);
-        setAgency('');
-        setM1(0);
-        setM2(0);
-        setM3(0);
-        setV1(0);
-        setV2(0);
-        setTotal(0);
-        setRoom('');
-        setDescription('');
-        setPayment('');
-        setResTaker('');
-        closeReservationForm();
-      } else {
-        alert('Rezervasyon kaydedilemedi');
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Sunucuya bağlanılamıyor');
+    } catch (err) {
+      console.error("Rezervasyon kaydı başarısız:", err);
     }
   };
 
   return (
-    <div className="container mx-auto w-full max-w-xl p-4">
-      <button
-        onClick={openReservationForm}
-        className="bg-[#4682A9] text-white px-4 py-2 rounded right-5 fixed"
+    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-xl">
+      <h2 className="text-2xl font-bold mb-6">Yeni Rezervasyon</h2>
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
       >
-        Yeni Kayıt
-      </button>
+        <input
+          type="text"
+          name="name"
+          placeholder="İsim"
+          value={formData.name}
+          onChange={handleChange}
+          className="input border rounded-md px-4 py-2"
+        />
 
-      {reservationForm && (
-        <motion.div
-          animate={{ opacity: [0, 100], transition: { ease: ['easeIn', 'easeOut'] } }}
-          className="absolute inset-0 flex items-center top-96 justify-center z-20"
+        <input
+          type="text"
+          name="phone"
+          placeholder="Telefon"
+          value={formData.phone}
+          onChange={handleChange}
+          className="input border rounded-md px-4 py-2"
+        />
+
+        <input
+          type="datetime-local"
+          name="date"
+          value={formData.date}
+          onChange={handleChange}
+          className="input border rounded-md px-4 py-2"
+        />
+
+        <select
+          name="clientId"
+          value={formData.clientId}
+          onChange={handleChange}
+          className="input border rounded-md px-4 py-2"
         >
-          <div className="gap-3 p-10 mx-auto bg-gray-100 shadow-xl w-3/4 relative">
-            <button
-              onClick={closeReservationForm}
-              className="bg-red-600 text-white px-3 py-1 right-0 -top-10 absolute"
-            >
-              X
-            </button>
+          <option value="">Müşteri Seçiniz</option>
+          {clients.map((client) => (
+            <option key={client.id} value={client.id}>
+              {client.company}
+            </option>
+          ))}
+        </select>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col w-full justify-center items-center gap-1">
-                  <div className="bg-gray-400 w-full p-3 items-center justify-center flex mb-2">
-                    <h1 className="text-gray-800 font-semibold">Rezervasyon Bilgileri</h1>
-                  </div>
+        <select
+          name="resTakerId"
+          value={formData.resTakerId}
+          onChange={handleChange}
+          className="input border rounded-md px-4 py-2"
+        >
+          <option value="">Rezervasyonu Alan</option>
+          {employees.map((emp) => (
+            <option key={emp.id} value={emp.id}>
+              {emp.name} {emp.lastname}
+            </option>
+          ))}
+        </select>
 
-                  <div className="flex w-full gap-2">
-                    <label className="mb-1 text-sm font-medium w-1/4 py-4">
-                      Rez. Tarih <span className="text-red-600">*</span>
-                    </label>
-                    <input
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      type="date"
-                      className="px-3 py-0 border rounded w-full h-12"
-                      required
-                    />
-                  </div>
+        <select
+          name="fromWhoId"
+          value={formData.fromWhoId}
+          onChange={handleChange}
+          className="input border rounded-md px-4 py-2"
+        >
+          <option value="">Yetkili</option>
+          {employees.map((emp) => (
+            <option key={emp.id} value={emp.id}>
+              {emp.name} {emp.lastname}
+            </option>
+          ))}
+        </select>
 
-                  {/* fromWho select */}
-                  <div className="flex w-full gap-2">
-                    <label className="mb-1 text-sm font-medium w-1/4 py-4">
-                      Rez. Veren <span className="text-red-600">*</span>
-                    </label>
-                    <select
-                      value={fromWho}
-                      onChange={(e) => setFromWho(e.target.value)}
-                      required
-                      className="px-3 py-0 h-12 border rounded w-full"
-                    >
-                      <option value="">Seçiniz</option>
-                      {clients.map((client) => (
-                        <option key={client.id} value={client.id}>
-                          {client.company}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+        <select
+          name="arrivalTransferPointId"
+          value={formData.arrivalTransferPointId}
+          onChange={handleChange}
+          className="input border rounded-md px-4 py-2"
+        >
+          <option value="">Geliş Transfer Noktası</option>
+          {transferPoints.map((tp) => (
+            <option key={tp.id} value={tp.id}>
+              {tp.transferPointName}
+            </option>
+          ))}
+        </select>
 
-                  <div className="flex w-full gap-2">
-                    <label className="mb-1 text-sm font-medium w-1/4 py-4">Rez. Alan <span className="text-red-600">*</span></label>
-                    {/* resTaker select */}
-                    <select
-                      value={resTaker}
-                      onChange={(e) => setResTaker(e.target.value)}
-                      required
-                      className="px-3 py-0 h-12 border rounded w-full"
-                    >
-                      <option value="">Seçiniz</option>
-                      {employees.map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.name} {emp.lastname}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+        <select
+          name="returnTransferPointId"
+          value={formData.returnTransferPointId}
+          onChange={handleChange}
+          className="input border rounded-md px-4 py-2"
+        >
+          <option value="">Dönüş Transfer Noktası</option>
+          {transferPoints.map((tp) => (
+            <option key={tp.id} value={tp.id}>
+              {tp.transferPointName}
+            </option>
+          ))}
+        </select>
 
-                  {/* Diğer inputlar aynı */}
-                  <div className="flex w-full gap-2">
-                    <label className="mb-1 text-sm font-medium w-1/4 py-4">Ödeme <span className="text-red-600">*</span></label>
-                    <input
-                      value={payment}
-                      onChange={(e) => setPayment(e.target.value)}
-                      type="text"
-                      className="px-3 py-0 h-12 border rounded w-full"
-                      required
-                    />
-                  </div>
+        <select
+          name="saloonId"
+          value={formData.saloonId}
+          onChange={handleChange}
+          className="input border rounded-md px-4 py-2"
+        >
+          <option value="">Salon Seçiniz</option>
+          {saloons.map((saloon) => (
+            <option key={saloon.id} value={saloon.id}>
+              {saloon.saloonName}
+            </option>
+          ))}
+        </select>
 
-                  <div className="flex w-full gap-2">
-                    <label className="mb-1 text-sm font-medium w-1/4 py-4">Oda</label>
-                    <input
-                      value={room}
-                      onChange={(e) => setRoom(e.target.value)}
-                      type="text"
-                      className="px-3 py-0 h-12 border rounded w-full"
-                    />
-                  </div>
+        <select
+          name="resTableId"
+          value={formData.resTableId}
+          onChange={handleChange}
+          className="input border rounded-md px-4 py-2"
+          disabled={!formData.saloonId}  // Salon seçilmeden masa seçilmesin
+        >
+          <option value="">Masa Seçiniz</option>
+          {resTables.filter(t => t.saloon.id === formData.saloonId)
+            .map((table) => (
+              <option key={table.id} value={table.id}>
+                {table.name} (Kapasite: {table.capacity})
+              </option>
+            ))}
+        </select>
 
-                  <div className="flex w-full gap-2">
-                    <label className="mb-1 text-sm font-medium w-1/4 py-4">Rez. Açıklama</label>
-                    <input
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      type="text"
-                      className="px-3 py-0 h-12 border rounded w-full"
-                    />
-                  </div>
-                </div>
+        <textarea
+          name="notes"
+          value={formData.notes}
+          onChange={handleChange}
+          placeholder="Notlar"
+          className="input border rounded-md px-4 py-2 col-span-1 md:col-span-2"
+          rows={3}
+        />
 
-                <div className="flex flex-col w-full justify-center items-center gap-1">
-                  <div className="bg-gray-400 w-full p-3 items-center justify-center flex mb-2">
-                    <h1 className="text-gray-800 font-semibold">Transfer Bilgileri</h1>
-                  </div>
-                  <div className="flex w-full gap-2">
-                    <label className="mb-1 text-sm font-medium w-1/4 py-4">G/D</label>
-                    <div className="w-1/4">
-                      <Switch value="checkedA" inputProps={{ 'aria-label': 'Switch A' }} />
-                    </div>
-                    <div className="w-1/4">
-                      <Switch value="checkedB" inputProps={{ 'aria-label': 'Switch B' }} />
-                    </div>
-                  </div>
-                  
-                </div>
-              </div>
-
-              <button type="submit" className="p-3 bg-blue-600 text-white rounded hover:bg-blue-700">
-                Kaydet
-              </button>
-            </form>
-          </div>
-        </motion.div>
-      )}
+        <button
+          type="submit"
+          className="col-span-1 md:col-span-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl"
+        >
+          Kaydet
+        </button>
+      </form>
     </div>
   );
-};
-
-export default ReservationForm;
+}

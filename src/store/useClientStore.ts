@@ -13,15 +13,16 @@ interface ClientStore {
 export const useClientStore = create<ClientStore>((set, get) => ({
   clients: [],
   fetchClients: async () => {
-    try {
-      const res = await fetch("http://localhost:3001/api/clients");
-      if (!res.ok) throw new Error("Failed to fetch clients");
-      const data: Client[] = await res.json();
-      set({ clients: data });
-    } catch (error) {
-      console.error("Error fetching clients:", error);
-    }
-  },
+  try {
+    const res = await fetch("http://localhost:3001/api/clients");
+    if (!res.ok) throw new Error("Failed to fetch clients");
+    const data: Client[] = await res.json();
+    console.log("📥 Yeni veriler fetch edildi:", data); // 🧪
+    set({ clients: data });
+  } catch (error) {
+    console.error("Error fetching clients:", error);
+  }
+},
   addClient: async (client) => {
     try {
       const res = await fetch("http://localhost:3001/api/clients", {
@@ -36,18 +37,23 @@ export const useClientStore = create<ClientStore>((set, get) => ({
     }
   },
   updateClient: async (id, client) => {
-    try {
-      const res = await fetch(`http://localhost:3001/api/clients/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(client),
-      });
-      if (!res.ok) throw new Error("Failed to update client");
-      await get().fetchClients();
-    } catch (error) {
-      console.error("Error updating client:", error);
-    }
-  },
+  try {
+    const res = await fetch(`http://localhost:3001/api/clients/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(client),
+    });
+    if (!res.ok) throw new Error("Failed to update client");
+
+    const updated = await res.json();
+
+    set((state) => ({
+      clients: state.clients.map((c) => (c.id === id ? updated : c)),
+    }));
+  } catch (error) {
+    console.error("Error updating client:", error);
+  }
+},
   deleteClient: async (id) => {
     try {
       const res = await fetch(`http://localhost:3001/api/clients/${id}`, {

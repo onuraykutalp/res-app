@@ -1,0 +1,17 @@
+export interface SubIncome {
+    id: string,
+    menuName: string,
+    currency: string,
+    flierPrice: number,
+    otelPrice: number,
+    fiveAndFarPrice: number,
+    agencyPrice: number,
+    guidePrice: number,
+    individualPrice: number,
+    companyPrice: number,
+    onlinePrice: number,
+    othersPrice: number,
+    startedAt: string,
+    endedAt: string,
+    createdAt: string,
+}
