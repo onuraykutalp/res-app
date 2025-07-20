@@ -1,69 +1,74 @@
 import { create } from "zustand";
-import type { Reservation, ReservationInput, TransferInput } from "../types/Reservation"; // doğru yolu kullan
+import { Reservation, ReservationInput } from "../types/Reservation";
 
-interface ReservationState {
+interface ReservationStore {
   reservations: Reservation[];
   fetchReservations: () => Promise<void>;
-  createReservation: (data: ReservationInput & { transfers?: TransferInput[] }) => Promise<void>;
-  updateReservation: (
-    id: string,
-    input: Partial<ReservationInput> & { transfers?: TransferInput[]; deletedTransferIds?: string[] }
-  ) => Promise<void>;
+  createReservation: (data: ReservationInput) => Promise<void>;
+  updateReservation: (id: string, data: ReservationInput) => Promise<void>;
   deleteReservation: (id: string) => Promise<void>;
 }
 
-export const useReservationStore = create<ReservationState>((set, get) => ({
+export const useReservationStore = create<ReservationStore>((set) => ({
   reservations: [],
 
   fetchReservations: async () => {
     try {
       const res = await fetch("http://localhost:3001/api/reservations");
-      const data = await res.json();
+      const data: Reservation[] = await res.json();
       set({ reservations: data });
     } catch (error) {
-      console.error("Fetch reservations error:", error);
+      console.error("Fetch error:", error);
     }
   },
 
-  createReservation: async (data) => {
+  createReservation: async (data: ReservationInput) => {
     try {
       const res = await fetch("http://localhost:3001/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      const created = await res.json();
-      set((state) => ({ reservations: [...state.reservations, created] }));
+      if (!res.ok) throw new Error("Create failed");
+      const newReservation: Reservation = await res.json();
+      set((state) => ({
+        reservations: [...state.reservations, newReservation],
+      }));
     } catch (error) {
-      console.error("Create reservation error:", error);
+      console.error("Create error:", error);
     }
   },
 
-  updateReservation: async (id, data) => {
+  updateReservation: async (id: string, data: ReservationInput) => {
     try {
       const res = await fetch(`http://localhost:3001/api/reservations/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      const updated = await res.json();
-
+      if (!res.ok) throw new Error("Update failed");
+      const updatedReservation: Reservation = await res.json();
       set((state) => ({
-        reservations: state.reservations.map((r) => (r.id === id ? updated : r)),
+        reservations: state.reservations.map((r) =>
+          r.id === id ? updatedReservation : r
+        ),
       }));
     } catch (error) {
-      console.error("Update reservation error:", error);
+      console.error("Update error:", error);
     }
   },
 
-  deleteReservation: async (id) => {
+  deleteReservation: async (id: string) => {
     try {
-      await fetch(`http://localhost:3001/api/reservations/${id}`, { method: "DELETE" });
+      const res = await fetch(`http://localhost:3001/api/reservations/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Delete failed");
       set((state) => ({
         reservations: state.reservations.filter((r) => r.id !== id),
       }));
     } catch (error) {
-      console.error("Delete reservation error:", error);
+      console.error("Delete error:", error);
     }
   },
 }));

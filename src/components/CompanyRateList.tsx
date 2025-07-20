@@ -33,7 +33,7 @@ const CompanyRateList = () => {
     const { name, value } = e.target;
     setFormState((prev) => ({
       ...prev,
-      [name]: name === "m1" || name === "m2" || name === "m3" || name === "v1" || name === "v2"
+      [name]: ["m1", "m2", "m3", "v1", "v2"].includes(name)
         ? parseFloat(value)
         : value,
     }));
@@ -79,51 +79,17 @@ const CompanyRateList = () => {
                         className="w-full p-1 border rounded"
                       />
                     </td>
-                    <td className="p-2 border">
-                      <input
-                        name="m1"
-                        type="number"
-                        value={formState.m1 || ""}
-                        onChange={handleChange}
-                        className="w-full p-1 border rounded"
-                      />
-                    </td>
-                    <td className="p-2 border">
-                      <input
-                        name="m2"
-                        type="number"
-                        value={formState.m2 || ""}
-                        onChange={handleChange}
-                        className="w-full p-1 border rounded"
-                      />
-                    </td>
-                    <td className="p-2 border">
-                      <input
-                        name="m3"
-                        type="number"
-                        value={formState.m3 || ""}
-                        onChange={handleChange}
-                        className="w-full p-1 border rounded"
-                      />
-                    </td>
-                    <td className="p-2 border">
-                      <input
-                        name="v1"
-                        type="number"
-                        value={formState.v1 || ""}
-                        onChange={handleChange}
-                        className="w-full p-1 border rounded"
-                      />
-                    </td>
-                    <td className="p-2 border">
-                      <input
-                        name="v2"
-                        type="number"
-                        value={formState.v2 || ""}
-                        onChange={handleChange}
-                        className="w-full p-1 border rounded"
-                      />
-                    </td>
+                    {["m1", "m2", "m3", "v1", "v2"].map((field) => (
+                      <td key={field} className="p-2 border">
+                        <input
+                          name={field}
+                          type="number"
+                          value={formState[field as keyof CompanyRate] ?? ""}
+                          onChange={handleChange}
+                          className="w-full p-1 border rounded"
+                        />
+                      </td>
+                    ))}
                     <td className="p-2 border">
                       <input
                         name="currency"
@@ -136,7 +102,11 @@ const CompanyRateList = () => {
                       <input
                         name="startDate"
                         type="date"
-                        value={formState.startDate?.slice(0, 10) || ""}
+                        value={
+                          formState.startDate
+                            ? formState.startDate.slice(0, 10)
+                            : ""
+                        }
                         onChange={handleChange}
                         className="w-full p-1 border rounded"
                       />
@@ -145,7 +115,11 @@ const CompanyRateList = () => {
                       <input
                         name="endDate"
                         type="date"
-                        value={formState.endDate?.slice(0, 10) || ""}
+                        value={
+                          formState.endDate
+                            ? formState.endDate.slice(0, 10)
+                            : ""
+                        }
                         onChange={handleChange}
                         className="w-full p-1 border rounded"
                       />
@@ -159,10 +133,16 @@ const CompanyRateList = () => {
                       />
                     </td>
                     <td className="p-2 border flex gap-2">
-                      <button onClick={handleSave} className="bg-green-500 text-white px-2 py-1 rounded">
+                      <button
+                        onClick={handleSave}
+                        className="bg-green-500 text-white px-2 py-1 rounded"
+                      >
                         Kaydet
                       </button>
-                      <button onClick={handleCancel} className="bg-gray-400 text-white px-2 py-1 rounded">
+                      <button
+                        onClick={handleCancel}
+                        className="bg-gray-400 text-white px-2 py-1 rounded"
+                      >
                         İptal
                       </button>
                     </td>
@@ -176,14 +156,24 @@ const CompanyRateList = () => {
                     <td className="p-2 border">{rate.v1}</td>
                     <td className="p-2 border">{rate.v2}</td>
                     <td className="p-2 border">{rate.currency}</td>
-                    <td className="p-2 border">{rate.startDate.slice(0, 10)}</td>
-                    <td className="p-2 border">{rate.endDate.slice(0, 10)}</td>
+                    <td className="p-2 border">
+                      {rate.startDate?.slice(0, 10) || "-"}
+                    </td>
+                    <td className="p-2 border">
+                      {rate.endDate?.slice(0, 10) || "-"}
+                    </td>
                     <td className="p-2 border">{rate.description}</td>
                     <td className="p-2 border flex gap-2">
-                      <button onClick={() => handleEdit(rate)} className="bg-blue-500 text-white px-2 py-1 rounded">
+                      <button
+                        onClick={() => handleEdit(rate)}
+                        className="bg-blue-500 text-white px-2 py-1 rounded"
+                      >
                         Düzenle
                       </button>
-                      <button onClick={() => deleteCompanyRate(rate.id)} className="bg-red-500 text-white px-2 py-1 rounded">
+                      <button
+                        onClick={() => deleteCompanyRate(rate.id)}
+                        className="bg-red-500 text-white px-2 py-1 rounded"
+                      >
                         Sil
                       </button>
                     </td>

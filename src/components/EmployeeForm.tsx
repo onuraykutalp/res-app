@@ -23,7 +23,7 @@ const EmployeeForm: React.FC = () => {
         if(!name || !lastName || !phone ||  !username || !groupId){
             return alert("Tüm zorunlu alanları doldurun.");
         }
-        addEmployee({ name, lastname: lastName, phone: Number(phone), username, groupId });
+        addEmployee({ name, lastname: lastName, phone: Number(phone), username, groupId, password: null });
         setName('');
         setLastName('');
         setPhone('');

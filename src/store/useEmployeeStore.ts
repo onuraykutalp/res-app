@@ -6,7 +6,8 @@ interface EmployeeInput {
   lastname: string;
   phone: number;
   username: string;
-  groupId: string;   
+  groupId: string;
+  password: null // ekleyebilirsin
 }
 
 interface EmployeeStore {
@@ -26,13 +27,16 @@ export const useEmployeeStore = create<EmployeeStore>((set, get) => ({
     set({ employees: data });
   },
   addEmployee: async (emp) => {
-    await fetch('http://localhost:3001/api/employees', {
-      method: 'POST',
-      headers:  { 'Content-Type': 'application/json' },
-      body: JSON.stringify(emp),
-    });
-    await get().fetchEmployees();
-  },
+  await fetch('http://localhost:3001/api/employees', {
+    method: 'POST',
+    headers:  { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...emp,
+      phone: Number(emp.phone), // güvenli dönüşüm
+    }),
+  });
+  await get().fetchEmployees();
+},
   updateEmployee: async (id, emp) => {
     await fetch(`http://localhost:3001/api/employees/${id}`, {
       method: 'PUT',

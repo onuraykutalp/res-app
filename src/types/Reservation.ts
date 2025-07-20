@@ -3,107 +3,113 @@ import { Employee } from "./Employee";
 import { TransferPoint } from "./TransferPoint";
 import { Saloon } from "./Saloon";
 import { ResTable } from "./ResTable";
-import { CompanyRate } from "./CompanyRate";
-import { Transfer } from "./Transfer";
-import { GeneralIncome } from "./GeneralIncome";
 
 export interface Reservation {
-  id: string;
-  date: string;
-  paymentType: string;
-  room?: string;
-  voucherNo: string;
-  nationality: string;
-  description?: string;
-  transferNote?: string;
+  id: string; // Reservation No
+  date: string; // Reservation Date
+  room?: string; // Room (optional)
+  voucherNo?: string;
+  nationality?: string;
+  description?: string; // Res Description (optional)
+  transferNote?: string; // Transfer Description (optional)
   ship: string;
 
-  fromWhoId?: string; // Müşteri seçilmeyebilir, opsiyonel yaptım
+  // Müşteri (Client) veya boş olabilir (Who Gives Reservation)
+  fromWhoId?: string;
   fromWho?: Client;
 
+  // Rezervasyonu alan personel (Employee)
   resTakerId: string;
   resTaker?: Employee;
 
+  // Yetkili (Employee)
   authorizedId: string;
   authorized?: Employee;
 
+  // Transferler (boş bırakılabilir)
   arrivalTransferId?: string;
   arrivalTransfer?: TransferPoint;
 
   returnTransferId?: string;
   returnTransfer?: TransferPoint;
 
+  // Salon ve masa bilgileri
   saloonId: string;
   saloon?: Saloon;
-
-  m1: number;
-  m1Price: number;
-  m2: number;
-  m2Price: number;
-  m3: number;
-  m3Price: number;
-  v1: number;
-  v1Price: number;
-  v2: number;
-  v2Price: number;
 
   resTableId: string;
   resTable?: ResTable;
 
-  menuId: string;
-  menu?: CompanyRate;
+  // Menü adetleri
+  m1: number;
+  m2: number;
+  m3: number;
+  v1: number;
+  v2: number;
 
-  transfers?: Transfer[];
+  // Kişi sayısı detayları
+  full: number;
+  half: number;
+  infant: number;
+  guide: number;
 
-  generalIncomeId?: string; // Eğer müşteri yoksa bu üzerinden fiyat alınabilir
-  generalIncome?: GeneralIncome;
+  // Hesaplanan toplam kişi sayısı
+  totalPerson: number;
 
-  price: number; // Rezervasyonun fiyatı
+  // Satılan menü tipleri listesi (örneğin: ["M1", "V2"])
+  tour: string[];
+
+  // Ödeme tipi (Enum olarak tanımlanacak: 'Gemide' | 'Cari' | 'Comp' | 'Komisyonsuz')
+  paymentType: "Gemide" | "Cari" | "Comp" | "Komisyonsuz";
+
+  // Alınan para ve şirkete ödenecek para
+  moneyReceived: number;
+  moneyToPayCompany: number;
+
+  // Hesaplanan toplam ücret (CompanyRate'lere göre hesaplanıp burada tutulacak)
+  fullPrice: number;
 
   createdAt: string;
 }
 
-export interface TransferInput {
-  personQuantity: number;
-  time: string;
-  transferDesc?: string;
-  transferLocationId: string;
-  transferPointId: string;
-  driverId?: string;
-}
 
 export interface ReservationInput {
   date: string;
-  paymentType: string;
   room?: string;
   voucherNo?: string;
-  nationality: string;
+  nationality?: string;  // artık boş bırakılabilir
   description?: string;
   transferNote?: string;
   ship: string;
 
-  fromWhoId?: string; // opsiyonel oldu müşteri
+  fromWhoId?: string;
+
   resTakerId: string;
   authorizedId: string;
-
-  m1: number;
-  m1Price: number;
-  m2: number;
-  m2Price: number;
-  m3: number;
-  m3Price: number;
-  v1: number;
-  v1Price: number;
-  v2: number;
-  v2Price: number;
 
   arrivalTransferId?: string;
   returnTransferId?: string;
 
   saloonId: string;
   resTableId: string;
-  menuId: string;
-  price: number; // ← EKLİYORSUN!
 
-  transfers?: TransferInput[]; // opsiyonel transfer dizisi
+  m1: number;
+  m2: number;
+  m3: number;
+  v1: number;
+  v2: number;
+
+  full: number;
+  half: number;
+  infant: number;
+  guide: number;
+
+  tour: string[];
+
+  paymentType: "Gemide" | "Cari" | "Comp" | "Komisyonsuz";
+
+  moneyReceived: number;
+  moneyToPayCompany: number;
+
+  fullPrice: number;
 }

@@ -5,45 +5,40 @@ import { useSaloonStore } from "../store/useSaloonStore";
 import { useResTableStore } from "../store/useResTableStore";
 import { useTransferPointStore } from "../store/useTransferPointStore";
 import { useReservationStore } from "../store/useReservationStore";
-
-interface ReservationFormData {
-  name: string;
-  phone: string;
-  date: string;
-  clientId: string;
-  resTakerId: string;
-  fromWhoId: string;
-  saloonId: string;
-  resTableId: string;
-  arrivalTransferPointId: string;
-  returnTransferPointId: string;
-  notes: string;
-  paymentType: string;      // yeni alan
-  nationality: string;      // yeni alan
-  ship: string;             // yeni alan
-  authorizedId: string;     // yeni alan
-  menuId: string;           // yeni alan
-}
+import { ReservationInput } from "../types/Reservation";
 
 export default function ReservationForm() {
-  const [formData, setFormData] = useState<ReservationFormData>({
-    name: "",
-    phone: "",
-    date: "",
-    clientId: "",
-    resTakerId: "",
-    fromWhoId: "",
-    saloonId: "",
-    resTableId: "",
-    arrivalTransferPointId: "",
-    returnTransferPointId: "",
-    notes: "",
-    paymentType: "",               // EKLENDİ
-    nationality: "",               // EKLENDİ
-    ship: "",                      // EKLENDİ
-    authorizedId: "",              // EKLENDİ
-    menuId: "",                    // EKLENDİ
-  });
+  const [formData, setFormData] = useState<ReservationInput>({
+  date: new Date().toISOString(), // ya da kullanıcıdan seçilen geçerli tarih
+  room: undefined,
+  voucherNo: undefined,
+  nationality: undefined,
+  description: undefined,
+  transferNote: undefined,
+  ship: "",
+  fromWhoId: undefined,
+  resTakerId: "some-valid-uuid", // boş string yerine gerçek id ya da undefined/null
+  authorizedId: "some-valid-uuid",
+  arrivalTransferId: undefined,
+  returnTransferId: undefined,
+  saloonId: "some-valid-uuid",
+  resTableId: "some-valid-uuid",
+  m1: 0,
+  m2: 0,
+  m3: 0,
+  v1: 0,
+  v2: 0,
+  full: 0,
+  half: 0,
+  infant: 0,
+  guide: 0,
+  tour: {}, // boş obje
+  paymentType: "Gemide",
+  moneyReceived: 0,
+  moneyToPayCompany: 0,
+  fullPrice: 0,
+});
+
 
   const { clients, fetchClients } = useClientStore();
   const { employees, fetchEmployees } = useEmployeeStore();
@@ -64,194 +59,328 @@ export default function ReservationForm() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (
+      [
+        "m1", "m2", "m3", "v1", "v2",
+        "full", "half", "infant", "guide",
+        "moneyReceived", "moneyToPayCompany", "fullPrice",
+      ].includes(name)
+    ) {
+      const parsedValue = parseInt(value);
+      setFormData((prev) => ({
+        ...prev,
+        [name]: isNaN(parsedValue) ? 0 : parsedValue,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      const payload = {
-        ...formData,
-        // tarih formatını ISO string'e çevir
-        date: new Date(formData.date).toISOString(),
-      };
+    // tour dizisini oluştur
+    const tour: string[] = [];
+    if (formData.m1 > 0) tour.push(`${formData.m1}-M1`);
+    if (formData.m2 > 0) tour.push(`${formData.m2}-M2`);
+    if (formData.m3 > 0) tour.push(`${formData.m3}-M3`);
+    if (formData.v1 > 0) tour.push(`${formData.v1}-V1`);
+    if (formData.v2 > 0) tour.push(`${formData.v2}-V2`);
 
-      await createReservation(payload); // bu fonksiyon ID'lerle çalışmalı
+    // toplam kişi sayısı
+    const totalPerson = formData.full + formData.half + formData.infant + formData.guide;
 
-      setFormData({
-        name: "",
-        phone: "",
-        date: "",
-        clientId: "",
-        resTakerId: "",
-        fromWhoId: "",
-        saloonId: "",
-        resTableId: "",
-        arrivalTransferPointId: "",
-        returnTransferPointId: "",
-        notes: "",
+    // fullPrice basit örnek olarak:
+    // Burada şirket fiyatları vs. farklı olabilir, bunu güncelleyebilirsin
+    const fullPrice =
+      formData.m1 * 10 +
+      formData.m2 * 20 +
+      formData.m3 * 30 +
+      formData.v1 * 40 +
+      formData.v2 * 50;
 
-        paymentType: "",
-        nationality: "",
-        ship: "",
-        authorizedId: "",
-        menuId: "",
-      });
-    } catch (err) {
-      console.error("Rezervasyon kaydı başarısız:", err);
-    }
+    const payload: ReservationInput = {
+      ...formData,
+      tour,
+      fullPrice,
+    };
+
+    await createReservation(payload);
+
+    // form reset
+    setFormData({
+      date: "",
+      room: undefined,
+      voucherNo: undefined,
+      nationality: undefined,
+      description: undefined,
+      transferNote: undefined,
+      ship: "",
+      fromWhoId: undefined,
+      resTakerId: "",
+      authorizedId: "",
+      arrivalTransferId: undefined,
+      returnTransferId: undefined,
+      saloonId: "",
+      resTableId: "",
+      m1: 0,
+      m2: 0,
+      m3: 0,
+      v1: 0,
+      v2: 0,
+      full: 0,
+      half: 0,
+      infant: 0,
+      guide: 0,
+      tour: [],
+      paymentType: "Gemide",
+      moneyReceived: 0,
+      moneyToPayCompany: 0,
+      fullPrice: 0,
+    });
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-xl">
-      <h2 className="text-2xl font-bold mb-6">Yeni Rezervasyon</h2>
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-      >
+    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-6 bg-white shadow rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label htmlFor="date" className="block mb-1 font-semibold">Rezervasyon Tarihi</label>
         <input
-          type="text"
-          name="name"
-          placeholder="İsim"
-          value={formData.name}
-          onChange={handleChange}
-          className="input border rounded-md px-4 py-2"
-        />
-
-        <input
-          type="text"
-          name="phone"
-          placeholder="Telefon"
-          value={formData.phone}
-          onChange={handleChange}
-          className="input border rounded-md px-4 py-2"
-        />
-
-        <input
+          id="date"
           type="datetime-local"
           name="date"
           value={formData.date}
           onChange={handleChange}
-          className="input border rounded-md px-4 py-2"
+          required
+          className="input border rounded px-3 py-2 w-full"
         />
+      </div>
 
-        <select
-          name="clientId"
-          value={formData.clientId}
+      <div>
+        <label htmlFor="ship" className="block mb-1 font-semibold">Gemi</label>
+        <input
+          id="ship"
+          type="text"
+          name="ship"
+          value={formData.ship}
           onChange={handleChange}
-          className="input border rounded-md px-4 py-2"
+          required
+          className="input border rounded px-3 py-2 w-full"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="client" className="block mb-1 font-semibold">Müşteri</label>
+        <select
+          id="client"
+          name="fromWhoId"
+          value={formData.fromWhoId || ""}
+          onChange={handleChange}
+          required
+          className="input border rounded px-3 py-2 w-full"
         >
           <option value="">Müşteri Seçiniz</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>
-              {client.company}
+          {clients.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.company|| c.id}
             </option>
           ))}
         </select>
+      </div>
 
+      <div>
+        <label htmlFor="resTakerId" className="block mb-1 font-semibold">Rezervasyonu Alan</label>
         <select
+          id="resTakerId"
           name="resTakerId"
           value={formData.resTakerId}
           onChange={handleChange}
-          className="input border rounded-md px-4 py-2"
+          required
+          className="input border rounded px-3 py-2 w-full"
         >
-          <option value="">Rezervasyonu Alan</option>
-          {employees.map((emp) => (
-            <option key={emp.id} value={emp.id}>
-              {emp.name} {emp.lastname}
+          <option value="">Personel Seçiniz</option>
+          {employees.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.name} {e.lastname}
             </option>
           ))}
         </select>
+      </div>
 
+      <div>
+        <label htmlFor="authorizedId" className="block mb-1 font-semibold">Yetkili</label>
         <select
-          name="fromWhoId"
-          value={formData.fromWhoId}
+          id="authorizedId"
+          name="authorizedId"
+          value={formData.authorizedId}
           onChange={handleChange}
-          className="input border rounded-md px-4 py-2"
+          required
+          className="input border rounded px-3 py-2 w-full"
         >
-          <option value="">Yetkili</option>
-          {employees.map((emp) => (
-            <option key={emp.id} value={emp.id}>
-              {emp.name} {emp.lastname}
+          <option value="">Yetkili Seçiniz</option>
+          {employees.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.name} {e.lastname}
             </option>
           ))}
         </select>
+      </div>
 
+      <div>
+        <label htmlFor="saloonId" className="block mb-1 font-semibold">Salon</label>
         <select
-          name="arrivalTransferPointId"
-          value={formData.arrivalTransferPointId}
-          onChange={handleChange}
-          className="input border rounded-md px-4 py-2"
-        >
-          <option value="">Geliş Transfer Noktası</option>
-          {transferPoints.map((tp) => (
-            <option key={tp.id} value={tp.id}>
-              {tp.transferPointName}
-            </option>
-          ))}
-        </select>
-
-        <select
-          name="returnTransferPointId"
-          value={formData.returnTransferPointId}
-          onChange={handleChange}
-          className="input border rounded-md px-4 py-2"
-        >
-          <option value="">Dönüş Transfer Noktası</option>
-          {transferPoints.map((tp) => (
-            <option key={tp.id} value={tp.id}>
-              {tp.transferPointName}
-            </option>
-          ))}
-        </select>
-
-        <select
+          id="saloonId"
           name="saloonId"
           value={formData.saloonId}
           onChange={handleChange}
-          className="input border rounded-md px-4 py-2"
+          required
+          className="input border rounded px-3 py-2 w-full"
         >
           <option value="">Salon Seçiniz</option>
-          {saloons.map((saloon) => (
-            <option key={saloon.id} value={saloon.id}>
-              {saloon.saloonName}
+          {saloons.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.saloonName}
             </option>
           ))}
         </select>
+      </div>
 
+      <div>
+        <label htmlFor="resTableId" className="block mb-1 font-semibold">Masa</label>
         <select
+          id="resTableId"
           name="resTableId"
           value={formData.resTableId}
           onChange={handleChange}
-          className="input border rounded-md px-4 py-2"
-          disabled={!formData.saloonId}  // Salon seçilmeden masa seçilmesin
+          disabled={!formData.saloonId}
+          required
+          className="input border rounded px-3 py-2 w-full"
         >
           <option value="">Masa Seçiniz</option>
-          {resTables.filter(t => t.saloon.id === formData.saloonId)
-            .map((table) => (
-              <option key={table.id} value={table.id}>
-                {table.name} (Kapasite: {table.capacity})
+          {resTables
+            .filter((t) => t.saloon?.id === formData.saloonId)
+            .map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} (Kapasite: {t.capacity})
               </option>
             ))}
         </select>
+      </div>
 
+      <div className="md:col-span-2">
+        <label htmlFor="description" className="block mb-1 font-semibold">Notlar</label>
         <textarea
-          name="notes"
-          value={formData.notes}
+          id="description"
+          name="description"
+          value={formData.description || ""}
           onChange={handleChange}
-          placeholder="Notlar"
-          className="input border rounded-md px-4 py-2 col-span-1 md:col-span-2"
+          className="input border rounded px-3 py-2 w-full"
           rows={3}
         />
+      </div>
 
-        <button
-          type="submit"
-          className="col-span-1 md:col-span-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl"
+      <div>
+        <label htmlFor="paymentType" className="block mb-1 font-semibold">Ödeme Tipi</label>
+        <select
+          id="paymentType"
+          name="paymentType"
+          value={formData.paymentType}
+          onChange={handleChange}
+          required
+          className="input border rounded px-3 py-2 w-full"
         >
-          Kaydet
-        </button>
-      </form>
-    </div>
+          <option value="Gemide">Gemide</option>
+          <option value="Cari">Cari</option>
+          <option value="Comp">Comp</option>
+          <option value="Komisyonsuz">Komisyonsuz</option>
+        </select>
+      </div>
+
+      {/* Menü adetleri */}
+      {["m1", "m2", "m3", "v1", "v2"].map((key) => (
+        <div key={key}>
+          <label htmlFor={key} className="block mb-1 font-semibold">{key.toUpperCase()}</label>
+          <input
+            id={key}
+            type="number"
+            name={key}
+            min={0}
+            value={formData[key as keyof typeof formData] as number}
+            onChange={handleChange}
+            className="input border rounded px-3 py-2 w-full"
+          />
+        </div>
+      ))}
+
+      {/* Kişi sayıları */}
+      {["full", "half", "infant", "guide"].map((key) => (
+        <div key={key}>
+          <label htmlFor={key} className="block mb-1 font-semibold">{key.charAt(0).toUpperCase() + key.slice(1)}</label>
+          <input
+            id={key}
+            type="number"
+            name={key}
+            min={0}
+            value={formData[key as keyof typeof formData] as number}
+            onChange={handleChange}
+            className="input border rounded px-3 py-2 w-full"
+          />
+        </div>
+      ))}
+
+      {/* Finansal alanlar */}
+      <div>
+        <label htmlFor="moneyReceived" className="block mb-1 font-semibold">Alınan Para</label>
+        <input
+          id="moneyReceived"
+          type="number"
+          name="moneyReceived"
+          min={0}
+          step={0.01}
+          value={formData.moneyReceived}
+          onChange={handleChange}
+          className="input border rounded px-3 py-2 w-full"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="moneyToPayCompany" className="block mb-1 font-semibold">Şirkete Ödenecek Para</label>
+        <input
+          id="moneyToPayCompany"
+          type="number"
+          name="moneyToPayCompany"
+          min={0}
+          step={0.01}
+          value={formData.moneyToPayCompany}
+          onChange={handleChange}
+          className="input border rounded px-3 py-2 w-full"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="fullPrice" className="block mb-1 font-semibold">Toplam Ücret</label>
+        <input
+          id="fullPrice"
+          type="number"
+          name="fullPrice"
+          min={0}
+          step={0.01}
+          value={formData.fullPrice}
+          onChange={handleChange}
+          className="input border rounded px-3 py-2 w-full"
+          readOnly
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="md:col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded mt-4"
+      >
+        Kaydet
+      </button>
+    </form>
   );
 }

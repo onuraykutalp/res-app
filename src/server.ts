@@ -24,73 +24,6 @@ function sendJsonSafe(res: express.Response, data: any) {
 }
 
 
-// CREATE - Yeni rezervasyon ekle
-app.post("/api/reservations", async (req, res) => {
-  try {
-    const data = req.body;
-
-    const created = await prisma.reservation.create({
-      data: {
-        date: data.date ? new Date(data.date) : new Date(), // varsayılan tarih
-        paymentType: data.paymentType,
-        room: data.room,
-        voucherNo: data.voucherNo,
-        nationality: data.nationality,
-        description: data.description,
-        transferNote: data.transferNote,
-        ship: data.ship,
-
-        // ID kontrolleri
-        fromWhoId: data.fromWhoId || null,
-        resTakerId: data.resTakerId || null,
-        authorizedId: data.authorizedId || null,
-        arrivalTransferId: data.arrivalTransferId || null,
-        returnTransferId: data.returnTransferId || null,
-        saloonId: data.saloonId || null,
-        resTableId: data.resTableId || null,
-        menuId: data.menuId || null,
-
-        // transfers ilişkisi
-        transfers: data.transfers && data.transfers.length > 0
-          ? {
-              create: data.transfers.map((t: any) => ({
-                personQuantity: t.personQuantity,
-                time: t.time,
-                transferDesc: t.transferDesc,
-                transferLocationId: t.transferLocationId,
-                transferPointId: t.transferPointId,
-                driverId: t.driverId || null,
-              })),
-            }
-          : undefined,
-      },
-      include: {
-        transfers: true,
-        fromWho: true,
-        resTaker: true,
-        authorized: true,
-        arrivalTransfer: true,
-        returnTransfer: true,
-        saloon: true,
-        resTable: true,
-        menu: true,
-      },
-    });
-
-    res.status(201).json(created);
-  } catch (error: any) {
-    console.error("Reservation creation error:", error.message);
-    console.error("Full error object:", error);
-    res.status(500).json({
-      error: "Reservation creation failed",
-      message: error.message,
-    });
-  }
-});
-
-
-
-// READ ALL - Tüm rezervasyonları listele
 app.get("/api/reservations", async (req, res) => {
   try {
     const reservations = await prisma.reservation.findMany({
@@ -98,157 +31,121 @@ app.get("/api/reservations", async (req, res) => {
         fromWho: true,
         resTaker: true,
         authorized: true,
-        arrivalTransfer: true,
-        returnTransfer: true,
         saloon: true,
         resTable: true,
-        menu: true,
+        arrivalTransfer: true,
+        returnTransfer: true,
         transfers: true,
       },
-      orderBy: { date: "desc" },
     });
     res.json(reservations);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch reservations" });
+    console.error("Fetch error:", error);
+    res.status(500).json({ error: "Fetch failed" });
   }
 });
 
-// READ ONE - ID ile rezervasyon getir
-app.get("/api/reservations/:id", async (req, res) => {
+app.post("/api/reservations", async (req, res) => {
   try {
-    const id = req.params.id;
-    const reservation = await prisma.reservation.findUnique({
-      where: { id },
-      include: {
-        fromWho: true,
-        resTaker: true,
-        authorized: true,
-        arrivalTransfer: true,
-        returnTransfer: true,
-        saloon: true,
-        resTable: true,
-        menu: true,
-        transfers: true,
-      },
-    });
-    if (!reservation) {
-      return res.status(404).json({ error: "Reservation not found" });
-    }
-    res.json(reservation);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch reservation" });
-  }
-});
+    const data = req.body;
 
-// UPDATE - ID ile rezervasyon güncelle
-app.put("/api/reservations/:id", async (req, res) => {
-  const reservationId = req.params.id;
-  const data = req.body;
+    const { m1, m2, m3, v1, v2, full, half, infant, guide, ...rest } = data;
 
-  try {
-    // Önceki transferleri bul
-    const existingTransfers = await prisma.transfer.findMany({
-      where: { reservationId }
-    });
+    const totalPerson = (full || 0) + (half || 0) + (infant || 0) + (guide || 0);
 
-    // Silinmesi gerekenler
-    const deletedTransferIds = data.deletedTransferIds || [];
-    await prisma.transfer.deleteMany({
-      where: { id: { in: deletedTransferIds } }
-    });
+    const tourObj: Record<string, number> = {};
+    if (m1) tourObj["m1"] = m1;
+    if (m2) tourObj["m2"] = m2;
+    if (m3) tourObj["m3"] = m3;
+    if (v1) tourObj["v1"] = v1;
+    if (v2) tourObj["v2"] = v2;
 
-    // Transfer işlemleri
-    const transferOperations = data.transfers?.map((t: any) => {
-      if (t.id) {
-        // Güncelle
-        return prisma.transfer.update({
-          where: { id: t.id },
-          data: {
-            personQuantity: t.personQuantity,
-            time: t.time,
-            transferDesc: t.transferDesc,
-            transferLocationId: t.transferLocationId,
-            transferPointId: t.transferPointId,
-            driverId: t.driverId || null,
-          },
-        });
-      } else {
-        // Yeni transfer yarat
-        return prisma.transfer.create({
-          data: {
-            personQuantity: t.personQuantity,
-            time: t.time,
-            transferDesc: t.transferDesc,
-            transferLocationId: t.transferLocationId,
-            transferPointId: t.transferPointId,
-            driverId: t.driverId || null,
-            reservationId,
-          },
-        });
-      }
-    });
+    const tour = tourObj;
 
-    await Promise.all(transferOperations || []);
-
-    // Reservation update
-    const updatedReservation = await prisma.reservation.update({
-      where: { id: reservationId },
+    const newReservation = await prisma.reservation.create({
       data: {
-        date: data.date ? new Date(data.date) : undefined,
-        paymentType: data.paymentType,
-        room: data.room,
-        voucherNo: data.voucherNo,
-        nationality: data.nationality,
-        description: data.description,
-        transferNote: data.transferNote,
-        ship: data.ship,
-        fromWhoId: data.fromWhoId || null,
-        resTakerId: data.resTakerId,
-        authorizedId: data.authorizedId,
-        arrivalTransferId: data.arrivalTransferId || null,
-        returnTransferId: data.returnTransferId || null,
-        saloonId: data.saloonId,
-        resTableId: data.resTableId,
-        menuId: data.menuId,
-      },
-      include: {
-        transfers: true,
-        fromWho: true,
-        resTaker: true,
-        authorized: true,
-        arrivalTransfer: true,
-        returnTransfer: true,
-        saloon: true,
-        resTable: true,
-        menu: true,
+        ...rest,
+        m1,
+        m2,
+        m3,
+        v1,
+        v2,
+        full,
+        half,
+        infant,
+        guide,
+        tour,
+        totalPerson,
+        createdAt: new Date(),
       },
     });
-
-    res.json(updatedReservation);
+    res.json(newReservation);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to update reservation" });
+  console.error("Create error:", error);
+  if (error instanceof Error) {
+    console.error("Error message:", error.message);
+    console.error("Stack trace:", error.stack);
   }
+  res.status(500).json({ error: "Create failed" });
+}
 });
 
 
-// DELETE - ID ile rezervasyon sil
-app.delete("/api/reservations/:id", async (req, res) => {
+
+app.put("/api/reservations/:id", async (req, res) => {
+  const { id } = req.params;
   try {
-    const id = req.params.id;
+    const data = req.body;
+    const { m1, m2, m3, v1, v2, full, half, infant, guide, ...rest } = data;
 
-    await prisma.reservation.delete({
+    const totalPerson = (full || 0) + (half || 0) + (infant || 0) + (guide || 0);
+
+    const tourObj: Record<string, number> = {};
+    if (m1) tourObj["m1"] = m1;
+    if (m2) tourObj["m2"] = m2;
+    if (m3) tourObj["m3"] = m3;
+    if (v1) tourObj["v1"] = v1;
+    if (v2) tourObj["v2"] = v2;
+
+    const tour = tourObj;
+
+    const updated = await prisma.reservation.update({
       where: { id },
+      data: {
+        ...rest,
+        m1,
+        m2,
+        m3,
+        v1,
+        v2,
+        full,
+        half,
+        infant,
+        guide,
+        tour,
+        totalPerson,
+      },
     });
-
-    res.json({ message: "Reservation deleted successfully" });
+    res.json(updated);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to delete reservation" });
+    console.error("Update error:", error);
+    res.status(500).json({ error: "Update failed" });
   }
 });
+
+
+
+app.delete("/api/reservations/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.reservation.delete({ where: { id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).json({ error: "Delete failed" });
+  }
+});
+
 
 
 
@@ -275,71 +172,143 @@ app.post('/api/employee-groups', async (req, res) => {
     res.status(500).json({ error: 'Failed to create employee group' });
   }
 });
-
 // GET /api/employees
-app.get('/api/employees', async (req, res) => {
-  console.log('GET /api/employees called');
+app.get("/api/employees", async (req, res) => {
+  console.log("GET /api/employees called");
   try {
-    const employees = await prisma.employee.findMany({ include: { group: true } });
-    // phone BigInt olduğu için stringe çevriliyor
-    const employeesSafe = employees.map((emp: typeof employees[0]) => ({
+    const employees = await prisma.employee.findMany({
+      include: { group: true },
+    });
+
+    // phone zaten string ama yine güvenlik için toString kullandım
+    const employeesSafe = employees.map((emp) => ({
       ...emp,
-      phone: emp.phone.toString(),
+      phone: emp.phone?.toString() ?? "",
     }));
+
     sendJsonSafe(res, employeesSafe);
   } catch (error) {
-    console.error('GET /api/employees error:', error);
-    res.status(500).json({ error: 'Failed to fetch employees' });
+    console.error("GET /api/employees error:", error);
+    res.status(500).json({ error: "Failed to fetch employees" });
   }
 });
 
 // POST /api/employees
 app.post("/api/employees", async (req, res) => {
-  const { groupId, name, lastname, phone, username, password } = req.body;
-
   try {
+    const { groupId, phone, ...rest } = req.body;
+
+    if (!groupId) {
+      return res.status(400).json({ error: "groupId is required" });
+    }
+
+    if (!phone) {
+      return res.status(400).json({ error: "phone is required" });
+    }
+
     const newEmployee = await prisma.employee.create({
       data: {
-        name,
-        lastname,
-        phone: Number(phone),
-        username,
-        password: password || null, // opsiyonel olabilir
+        ...rest,
+        phone: String(phone),
         group: {
-          connect: { id: groupId }, // ❗ İlişkiyi bu şekilde kurman gerekir
+          connect: { id: groupId },
         },
       },
     });
 
-    res.status(201).json(newEmployee);
+    res.json(newEmployee);
   } catch (error: any) {
-    console.error("POST /api/employees error:", error.message, error.stack);
+    console.error("Create employee error:", error.message, error.stack);
     res.status(500).json({ error: error.message });
   }
 });
 
+// PUT /api/employees/:id
+app.put("/api/employees/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, lastname, phone, username, groupId } = req.body;
 
-// Login endpoint
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body as { username: string; password: string }; // <--- BURAYA DİKKAT
+  console.log("PUT /api/employees/:id called");
+  console.log("Params:", req.params);
+  console.log("Body:", req.body);
+
+  if (!id) {
+    return res.status(400).json({ error: "Employee id is required" });
+  }
+
+  if (!groupId) {
+    return res.status(400).json({ error: "groupId is required" });
+  }
+
+  if (!phone) {
+    return res.status(400).json({ error: "phone is required" });
+  }
+
+  try {
+    const updated = await prisma.employee.update({
+      where: { id },
+      data: {
+        name,
+        lastname,
+        phone: String(phone),
+        username,
+        group: {
+          connect: { id: groupId },
+        },
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error("PUT /api/employees/:id error", error);
+    res.status(500).json({ error: "Failed to update employee" });
+  }
+});
+
+// DELETE /api/employees/:id
+app.delete("/api/employees/:id", async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "Employee id is required" });
+  }
+
+  try {
+    await prisma.employee.delete({
+      where: { id },
+    });
+
+    res.json({ message: "Deleted Successfully" });
+  } catch (error) {
+    console.error("DELETE /api/employees/:id error:", error);
+    res.status(500).json({ error: "Failed to delete employee" });
+  }
+});
+
+
+// POST /api/login
+app.post("/api/login", async (req, res) => {
+  const { username, password } = req.body as {
+    username: string;
+    password: string;
+  };
 
   try {
     const user = await prisma.employee.findUnique({
-      where: { username }, // artık tip uyumlu
+      where: { username },
     });
 
     if (!user || !user.password) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Giriş başarılı
     res.json({
-      message: 'Login successful',
+      message: "Login successful",
       user: {
         id: user.id,
         name: user.name,
@@ -348,43 +317,8 @@ app.post('/api/login', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('POST /api/login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// PUT /api/employees/:id
-app.put('/api/employees/:id', async (req, res) => {
-  const { id } = req.params;
-  const { name, lastname, phone, username, groupId } = req.body;
-  try {
-    const updated = await prisma.employee.update({
-      where: { id },
-      data: {
-        name,
-        lastname,
-        phone: Number(phone),
-        username,
-        group: { connect: { id: groupId } },
-      }
-    });
-    const updatedSafe = { ...updated, phone: updated.phone.toString() };
-    sendJsonSafe(res, updatedSafe);
-  } catch (error) {
-    console.error('PUT /api/employees/:id error', error);
-    res.status(500).json({ error: 'Failed to update employee' });
-  }
-});
-
-// DELETE /api/employees/:id
-app.delete('/api/employees/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    await prisma.employee.delete({ where: { id } });
-    res.json({ message: 'Deleted Successfully' });
-  } catch (error) {
-    console.error('DELETE /api/employees/:id error:', error);
-    res.status(500).json({ error: 'Failed to delete employee' });
+    console.error("POST /api/login error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -866,6 +800,7 @@ app.delete('/api/general-incomes:id', async (req, res) => {
   }
 });
 
+// --- COMPANY RATES ---
 app.get("/api/company-rates", async (req, res) => {
   try {
     const rates = await prisma.companyRate.findMany();
@@ -880,7 +815,9 @@ app.post("/api/company-rates", async (req, res) => {
     const newRate = await prisma.companyRate.create({
       data: {
         ...req.body,
-        createdAt: new Date()
+        startDate: new Date(req.body.startDate),
+        endDate: new Date(req.body.endDate),
+        createdAt: new Date(),
       },
     });
     res.json(newRate);
@@ -895,7 +832,11 @@ app.put("/api/company-rates/:id", async (req, res) => {
   try {
     const updatedRate = await prisma.companyRate.update({
       where: { id },
-      data: req.body,
+      data: {
+        ...req.body,
+        startDate: new Date(req.body.startDate),
+        endDate: new Date(req.body.endDate),
+      }
     });
     res.json(updatedRate);
   } catch (error) {
@@ -912,7 +853,6 @@ app.delete("/api/company-rates/:id", async (req, res) => {
     res.status(500).json({ error: "Delete failed" });
   }
 });
-
 
 // Sağlık testi
 app.get('/test', (req, res) => {
