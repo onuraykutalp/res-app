@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE `reservation` ADD COLUMN `full` INTEGER NULL,
+    ADD COLUMN `guide` INTEGER NULL,
+    ADD COLUMN `half` INTEGER NULL,
+    ADD COLUMN `infant` INTEGER NULL;

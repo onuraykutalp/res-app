@@ -15,7 +15,13 @@ export const useReservationStore = create<ReservationStore>((set) => ({
   fetchReservations: async () => {
     try {
       const res = await fetch("http://localhost:3001/api/reservations");
-      const data: Reservation[] = await res.json();
+      const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        console.error("API response is not an array:", data);
+        return;
+      }
+
       set({ reservations: data });
     } catch (error) {
       console.error("Fetch error:", error);

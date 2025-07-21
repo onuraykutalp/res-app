@@ -30,8 +30,8 @@ model Employee {
   updatedClients         Client[]      @relation("UpdatedClients")
   createdSuppliers       Supplier[]    @relation("CreatedSuppliers")
   updatedSuppliers       Supplier[]    @relation("UpdatedSuppliers")
-  takenReservations      Reservation[] @relation("ReservationResTaker")
-  authorizedReservations Reservation[] @relation("ReservationAuthorized")
+  takenReservations      Reservation[] @relation("ResTaker")
+  authorizedReservations Reservation[] @relation("Authorized")
 }
 
 // ======================= CLIENT =======================
@@ -49,8 +49,6 @@ model Client {
   lastUpdate   DateTime?
   whoUpdatedId String?
   whoUpdated   Employee? @relation("UpdatedClients", fields: [whoUpdatedId], references: [id])
-
-  reservations Reservation[]
 }
 
 // ======================= SUPPLIER =======================
@@ -83,6 +81,8 @@ model CompanyRate {
   endDate     DateTime
   description String?
   createdAt   DateTime @default(now())
+
+  Reservation Reservation[]
 }
 
 // ======================= DRIVER =======================
@@ -224,9 +224,6 @@ model TransferPoint {
   locationId        String
   location          TransferLocation @relation(fields: [locationId], references: [id])
 
-  arrivalReservations Reservation[] @relation("ArrivalTransferReservations")
-  returnReservations  Reservation[] @relation("ReturnTransferReservations")
-
   transfers Transfer[]
 }
 
@@ -237,13 +234,14 @@ model Transfer {
   transferDesc       String?
   transferLocationId String
   transferPointId    String
-  driverId           String? // opsiyonel
-  reservationId      String? // opsiyonel çünkü transfer bağımsız olabilir
+  driverId           String?
+  reservationId      String?
 
   transferLocation TransferLocation @relation(fields: [transferLocationId], references: [id])
   transferPoint    TransferPoint    @relation(fields: [transferPointId], references: [id])
   driver           Driver?          @relation(fields: [driverId], references: [id])
-  reservation      Reservation?     @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  reservation Reservation? @relation(fields: [reservationId], references: [id], onDelete: Cascade)
 }
 
 // ======================= RESERVATION =======================
@@ -255,29 +253,41 @@ enum PaymentType {
 }
 
 model Reservation {
-  id           String   @id @default(uuid())
-  date         DateTime
-  room         String?
-  voucherNo    String?
-  nationality  String?
-  description  String?
-  transferNote String?
-  ship         String
+  id              String   @id @default(uuid())
+  reservationNo   Int      @unique
+  date            DateTime
+  room            String?
+  voucherNo       String?
+  nationality     String?
+  description     String?
+  transferNote    String?
+  ship            String?
+  m1              Int      @default(0)
+  m2              Int      @default(0)
+  m3              Int      @default(0)
+  v1              Int      @default(0)
+  v2              Int      @default(0)
+  full            Int?
+  half            Int?
+  infant          Int?
+  guide           Int?
+  totalPerson     Int?
+  fullPrice       Float    @default(0)
+  tour            String?
 
-  fromWhoId String?
-  fromWho   Client? @relation(fields: [fromWhoId], references: [id])
+  moneyReceived     Float   @default(0)
+  moneyToPayCompany Float   @default(0)
+
+  paymentType  PaymentType
+
+  companyRateId String
+  companyRate   CompanyRate @relation(fields: [companyRateId], references: [id])
 
   resTakerId String
-  resTaker   Employee @relation("ReservationResTaker", fields: [resTakerId], references: [id])
+  resTaker   Employee @relation("ResTaker", fields: [resTakerId], references: [id])
 
   authorizedId String
-  authorized   Employee @relation("ReservationAuthorized", fields: [authorizedId], references: [id])
-
-  arrivalTransferId String?
-  arrivalTransfer   TransferPoint? @relation("ArrivalTransferReservations", fields: [arrivalTransferId], references: [id])
-
-  returnTransferId String?
-  returnTransfer   TransferPoint? @relation("ReturnTransferReservations", fields: [returnTransferId], references: [id])
+  authorized   Employee @relation("Authorized", fields: [authorizedId], references: [id])
 
   saloonId String
   saloon   Saloon @relation(fields: [saloonId], references: [id])
@@ -285,28 +295,14 @@ model Reservation {
   resTableId String
   resTable   ResTable @relation(fields: [resTableId], references: [id])
 
-  m1 Int
-  m2 Int
-  m3 Int
-  v1 Int
-  v2 Int
+  // Artık sadece bu string alanları kullanıyoruz:
+  arrivalTransfer  String?
+  returnTransfer   String?
 
-  full        Int
-  half        Int
-  infant      Int
-  guide       Int
-  totalPerson Int
+  arrivalLocation  String?
+  returnLocation   String?
 
-  tour Json?
-
-  paymentType PaymentType
-
-  moneyReceived     Float
-  moneyToPayCompany Float
-
-  fullPrice Float
-
-  transfers Transfer[]
+  transfers Transfer[] // Transfer modeli ile bağlantı
 
   createdAt DateTime @default(now())
 }

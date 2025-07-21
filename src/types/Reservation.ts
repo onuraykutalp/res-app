@@ -1,11 +1,12 @@
-import { Client } from "./Client";
+
 import { Employee } from "./Employee";
-import { TransferPoint } from "./TransferPoint";
 import { Saloon } from "./Saloon";
 import { ResTable } from "./ResTable";
+import { CompanyRate } from "@prisma/client";
 
 export interface Reservation {
   id: string; // Reservation No
+  reservationNo: number; // Reservation No (for display)
   date: string; // Reservation Date
   room?: string; // Room (optional)
   voucherNo?: string;
@@ -15,8 +16,8 @@ export interface Reservation {
   ship: string;
 
   // Müşteri (Client) veya boş olabilir (Who Gives Reservation)
-  fromWhoId?: string;
-  fromWho?: Client;
+  companyRateId?: string;
+  companyRate?: CompanyRate;
 
   // Rezervasyonu alan personel (Employee)
   resTakerId: string;
@@ -26,12 +27,13 @@ export interface Reservation {
   authorizedId: string;
   authorized?: Employee;
 
-  // Transferler (boş bırakılabilir)
-  arrivalTransferId?: string;
-  arrivalTransfer?: TransferPoint;
+ 
 
-  returnTransferId?: string;
-  returnTransfer?: TransferPoint;
+  arrivalTransfer?: string,
+  returnTransfer?: string;
+
+  arrivalLocation?: string; // Transfer Arrival Location (optional)
+  returnLocation?: string; // Transfer Return Location (optional)
 
   // Salon ve masa bilgileri
   saloonId: string;
@@ -82,13 +84,16 @@ export interface ReservationInput {
   transferNote?: string;
   ship: string;
 
-  fromWhoId?: string;
+  companyRateId?: string;
 
   resTakerId: string;
   authorizedId: string;
 
-  arrivalTransferId?: string;
-  returnTransferId?: string;
+  arrivalTransfer?: string,
+  returnTransfer?: string;
+
+  arrivalLocation?: string; // Transfer Arrival Location (optional)
+  returnLocation?: string; // Transfer Return Location (optional)
 
   saloonId: string;
   resTableId: string;

@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
+import { PaymentType } from "@prisma/client";
 import bcrypt from 'bcrypt'
 
 const app = express();
@@ -24,47 +25,133 @@ function sendJsonSafe(res: express.Response, data: any) {
 }
 
 
+// GET /api/reservations
+// GET /api/reservations
 app.get("/api/reservations", async (req, res) => {
   try {
     const reservations = await prisma.reservation.findMany({
       include: {
-        fromWho: true,
+        companyRate: true,
         resTaker: true,
         authorized: true,
         saloon: true,
         resTable: true,
-        arrivalTransfer: true,
-        returnTransfer: true,
-        transfers: true,
       },
     });
-    res.json(reservations);
+    res.status(200).json(reservations);
   } catch (error) {
-    console.error("Fetch error:", error);
-    res.status(500).json({ error: "Fetch failed" });
+    console.error("HATA /api/reservations:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
+// POST /api/reservations
 app.post("/api/reservations", async (req, res) => {
   try {
-    const data = req.body;
+    const {
+      m1 = 0,
+      m2 = 0,
+      m3 = 0,
+      v1 = 0,
+      v2 = 0,
+      full = 0,
+      half = 0,
+      infant = 0,
+      guide = 0,
+      arrivalTransfer, // string (transferPointName)
+      returnTransfer,  // string (transferPointName)
+      companyRateId,
+      ...rest
+    } = req.body;
 
-    const { m1, m2, m3, v1, v2, full, half, infant, guide, ...rest } = data;
+    // Sanitize helpers
+    const sanitizeString = (val: any): string | null => {
+      if (typeof val === "string" && val.trim() !== "") return val;
+      return null;
+    };
 
-    const totalPerson = (full || 0) + (half || 0) + (infant || 0) + (guide || 0);
+    const arrivalTransferSafe = sanitizeString(arrivalTransfer);
+    const returnTransferSafe = sanitizeString(returnTransfer);
 
-    const tourObj: Record<string, number> = {};
-    if (m1) tourObj["m1"] = m1;
-    if (m2) tourObj["m2"] = m2;
-    if (m3) tourObj["m3"] = m3;
-    if (v1) tourObj["v1"] = v1;
-    if (v2) tourObj["v2"] = v2;
+    // 👉 TransferPoint'leri bul
+    const arrivalTP = arrivalTransferSafe
+      ? await prisma.transferPoint.findFirst({
+          where: { transferPointName: arrivalTransferSafe },
+          include: { location: true },
+        })
+      : null;
 
-    const tour = tourObj;
+    const returnTP = returnTransferSafe
+      ? await prisma.transferPoint.findFirst({
+          where: { transferPointName: returnTransferSafe },
+          include: { location: true },
+        })
+      : null;
 
+    // 👉 CompanyRate'den fiyatları al
+    const companyRate = await prisma.companyRate.findUnique({
+      where: { id: companyRateId },
+    });
+
+    if (!companyRate) {
+      return res.status(400).json({ error: "Geçersiz companyRateId" });
+    }
+
+    // 🔢 Kişi sayıları ve menü formatlaması
+    const totalPerson = full + half + infant + guide;
+
+    const menuMap: Record<string, string> = {
+      m1: "M1",
+      m2: "M2",
+      m3: "M3",
+      v1: "V1",
+      v2: "V2",
+    };
+    const counts = { m1, m2, m3, v1, v2 };
+    const tourParts = Object.entries(counts)
+      .filter(([_, value]) => value > 0)
+      .map(([key, value]) => `${value}-${menuMap[key]}`);
+    const tour = tourParts.join(", ");
+
+    const isoDate = new Date(rest.date).toISOString();
+
+    const isValidPaymentType = (val: any): val is PaymentType =>
+      ["Gemide", "Cari", "Comp", "Komisyonsuz"].includes(val);
+
+    const paymentType: PaymentType = isValidPaymentType(rest.paymentType)
+      ? rest.paymentType
+      : "Gemide";
+
+    // fullPrice hesapla
+    const fullPrice =
+      (companyRate.m1 * m1) +
+      (companyRate.m2 * m2) +
+      (companyRate.m3 * m3) +
+      (companyRate.v1 * v1) +
+      (companyRate.v2 * v2);
+
+    // 🔢 Benzersiz rezervasyon numarası üret
+    async function generateUniqueReservationNo(): Promise<number> {
+      let unique = false;
+      let number = 0;
+      while (!unique) {
+        number = Math.floor(Math.random() * (99999 - 100 + 1)) + 100;
+        const exists = await prisma.reservation.findUnique({
+          where: { reservationNo: number },
+        });
+        if (!exists) unique = true;
+      }
+      return number;
+    }
+
+    const reservationNo = await generateUniqueReservationNo();
+
+    // 💾 Kayıt
     const newReservation = await prisma.reservation.create({
       data: {
         ...rest,
+        paymentType,
+        date: isoDate,
         m1,
         m2,
         m3,
@@ -74,45 +161,82 @@ app.post("/api/reservations", async (req, res) => {
         half,
         infant,
         guide,
-        tour,
         totalPerson,
+        arrivalTransfer: arrivalTransferSafe,
+        returnTransfer: returnTransferSafe,
+        arrivalLocation: arrivalTP?.location?.locationName ?? null,
+        returnLocation: returnTP?.location?.locationName ?? null,
+        tour,
+        reservationNo,
+        companyRateId,
+        fullPrice,
         createdAt: new Date(),
       },
     });
-    res.json(newReservation);
+
+    res.status(201).json(newReservation);
   } catch (error) {
-  console.error("Create error:", error);
-  if (error instanceof Error) {
-    console.error("Error message:", error.message);
-    console.error("Stack trace:", error.stack);
+    console.error("Create reservation error:", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: "Unknown error" });
+    }
   }
-  res.status(500).json({ error: "Create failed" });
-}
 });
 
 
 
+
+// PUT /api/reservations/:id
 app.put("/api/reservations/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const data = req.body;
-    const { m1, m2, m3, v1, v2, full, half, infant, guide, ...rest } = data;
+    const {
+      m1 = 0,
+      m2 = 0,
+      m3 = 0,
+      v1 = 0,
+      v2 = 0,
+      full = 0,
+      half = 0,
+      infant = 0,
+      guide = 0,
+      arrivalTransfer,
+      returnTransfer,
+      companyRateId,
+      ...rest
+    } = req.body;
 
-    const totalPerson = (full || 0) + (half || 0) + (infant || 0) + (guide || 0);
+    const totalPerson = full + half + infant + guide;
 
-    const tourObj: Record<string, number> = {};
-    if (m1) tourObj["m1"] = m1;
-    if (m2) tourObj["m2"] = m2;
-    if (m3) tourObj["m3"] = m3;
-    if (v1) tourObj["v1"] = v1;
-    if (v2) tourObj["v2"] = v2;
+    const menuMap: Record<string, string> = {
+      m1: "M1",
+      m2: "M2",
+      m3: "M3",
+      v1: "V1",
+      v2: "V2",
+    };
+    const counts = { m1, m2, m3, v1, v2 };
+    const tourParts = Object.entries(counts)
+      .filter(([_, value]) => value > 0)
+      .map(([key, value]) => `${value}-${menuMap[key]}`);
+    const tour = tourParts.join(", ");
 
-    const tour = tourObj;
+    const isValidPaymentType = (val: any): val is PaymentType =>
+      ["Gemide", "Cari", "Comp", "Komisyonsuz"].includes(val);
 
-    const updated = await prisma.reservation.update({
+    const paymentType: PaymentType = isValidPaymentType(rest.paymentType)
+      ? rest.paymentType
+      : "Gemide";
+
+    const updatedReservation = await prisma.reservation.update({
       where: { id },
       data: {
         ...rest,
+        paymentType,
         m1,
         m2,
         m3,
@@ -122,32 +246,32 @@ app.put("/api/reservations/:id", async (req, res) => {
         half,
         infant,
         guide,
-        tour,
         totalPerson,
+        arrivalTransfer,
+        returnTransfer,
+        tour,
+        companyRateId,
       },
     });
-    res.json(updated);
+
+    res.json(updatedReservation);
   } catch (error) {
-    console.error("Update error:", error);
-    res.status(500).json({ error: "Update failed" });
+    console.error("Update reservation error:", error);
+    res.status(500).json({ error: "Reservation update failed" });
   }
 });
 
-
-
+// DELETE /api/reservations/:id
 app.delete("/api/reservations/:id", async (req, res) => {
   const { id } = req.params;
   try {
     await prisma.reservation.delete({ where: { id } });
-    res.json({ success: true });
+    res.json({ message: "Reservation deleted successfully" });
   } catch (error) {
-    console.error("Delete error:", error);
-    res.status(500).json({ error: "Delete failed" });
+    console.error("Delete reservation error:", error);
+    res.status(500).json({ error: "Reservation deletion failed" });
   }
 });
-
-
-
 
 // GET /api/employee-groups
 app.get('/api/employee-groups', async (req, res) => {
@@ -601,7 +725,11 @@ app.delete('/api/transfer-locations/:id', async (req, res) => {
 
 app.get("/api/transfer-points", async (req, res) => {
   try {
-    const points = await prisma.transferPoint.findMany();
+    const points = await prisma.transferPoint.findMany({
+      include: {
+        location: true,
+      },
+    });
     res.json(points);
   } catch (error) {
     console.error("Transfer points fetch error:", error);
@@ -806,7 +934,7 @@ app.get("/api/company-rates", async (req, res) => {
     const rates = await prisma.companyRate.findMany();
     res.json(rates);
   } catch (error) {
-    res.status(500).json({ error: "Fetch failed" });
+    res.status(500).json({ error: "deneme 1-2" });
   }
 });
 
