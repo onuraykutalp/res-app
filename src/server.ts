@@ -49,38 +49,45 @@ app.get("/api/reservations", async (req, res) => {
 app.post("/api/reservations", async (req, res) => {
   try {
     const {
-      m1 = 0,
-      m2 = 0,
-      m3 = 0,
-      v1 = 0,
-      v2 = 0,
-      full = 0,
-      half = 0,
-      infant = 0,
-      guide = 0,
-      arrivalTransfer, // string (transferPointName)
-      returnTransfer,  // string (transferPointName)
+      m1 = { full: 0, half: 0, infant: 0, guide: 0 },
+      m2 = { full: 0, half: 0, infant: 0, guide: 0 },
+      m3 = { full: 0, half: 0, infant: 0, guide: 0 },
+      v1 = { full: 0, half: 0, infant: 0, guide: 0 },
+      v2 = { full: 0, half: 0, infant: 0, guide: 0 },
+      arrivalTransfer,
+      returnTransfer,
       companyRateId,
+      date,
       ...rest
     } = req.body;
 
-    // Sanitize helpers
+    let { full = 0, half = 0, infant = 0, guide = 0 } = req.body;
+
+    if (!companyRateId) {
+      return res.status(400).json({ error: "companyRateId zorunludur" });
+    }
+    if (!date) {
+      return res.status(400).json({ error: "date zorunludur" });
+    }
+    const isoDate = new Date(date);
+    if (isNaN(isoDate.getTime())) {
+      return res.status(400).json({ error: "Geçersiz tarih formatı" });
+    }
+
+    // String temizleme
     const sanitizeString = (val: any): string | null => {
-      if (typeof val === "string" && val.trim() !== "") return val;
+      if (typeof val === "string" && val.trim() !== "") return val.trim();
       return null;
     };
-
     const arrivalTransferSafe = sanitizeString(arrivalTransfer);
     const returnTransferSafe = sanitizeString(returnTransfer);
 
-    // 👉 TransferPoint'leri bul
     const arrivalTP = arrivalTransferSafe
       ? await prisma.transferPoint.findFirst({
           where: { transferPointName: arrivalTransferSafe },
           include: { location: true },
         })
       : null;
-
     const returnTP = returnTransferSafe
       ? await prisma.transferPoint.findFirst({
           where: { transferPointName: returnTransferSafe },
@@ -88,49 +95,78 @@ app.post("/api/reservations", async (req, res) => {
         })
       : null;
 
-    // 👉 CompanyRate'den fiyatları al
     const companyRate = await prisma.companyRate.findUnique({
       where: { id: companyRateId },
     });
-
     if (!companyRate) {
       return res.status(400).json({ error: "Geçersiz companyRateId" });
     }
 
-    // 🔢 Kişi sayıları ve menü formatlaması
+    // Menü adet toplamları (her menüdeki kişi sayısı toplamı)
+    const sumMenuCounts = (menu: { full?: number; half?: number; infant?: number; guide?: number }) =>
+      (menu.full || 0) + (menu.half || 0) + (menu.infant || 0) + (menu.guide || 0);
+
+    const m1Count = sumMenuCounts(m1);
+    const m2Count = sumMenuCounts(m2);
+    const m3Count = sumMenuCounts(m3);
+    const v1Count = sumMenuCounts(v1);
+    const v2Count = sumMenuCounts(v2);
+
+    // Eğer doğrudan gelen full/half/infant/guide 0 ise menü içinden topla
+    if (full === 0 && half === 0 && infant === 0 && guide === 0) {
+      full =
+        (m1.full || 0) +
+        (m2.full || 0) +
+        (m3.full || 0) +
+        (v1.full || 0) +
+        (v2.full || 0);
+      half =
+        (m1.half || 0) +
+        (m2.half || 0) +
+        (m3.half || 0) +
+        (v1.half || 0) +
+        (v2.half || 0);
+      infant =
+        (m1.infant || 0) +
+        (m2.infant || 0) +
+        (m3.infant || 0) +
+        (v1.infant || 0) +
+        (v2.infant || 0);
+      guide =
+        (m1.guide || 0) +
+        (m2.guide || 0) +
+        (m3.guide || 0) +
+        (v1.guide || 0) +
+        (v2.guide || 0);
+    }
+
     const totalPerson = full + half + infant + guide;
 
-    const menuMap: Record<string, string> = {
-      m1: "M1",
-      m2: "M2",
-      m3: "M3",
-      v1: "V1",
-      v2: "V2",
-    };
-    const counts = { m1, m2, m3, v1, v2 };
-    const tourParts = Object.entries(counts)
-      .filter(([_, value]) => value > 0)
-      .map(([key, value]) => `${value}-${menuMap[key]}`);
-    const tour = tourParts.join(", ");
+    const tourParts = [
+      [m1Count, "M1"],
+      [m2Count, "M2"],
+      [m3Count, "M3"],
+      [v1Count, "V1"],
+      [v2Count, "V2"],
+    ]
+      .filter(([count]) => Number(count) > 0)
+      .map(([count, label]) => `${count}-${label}`);
 
-    const isoDate = new Date(rest.date).toISOString();
+    const tourString = tourParts.join(", ");
 
-    const isValidPaymentType = (val: any): val is PaymentType =>
-      ["Gemide", "Cari", "Comp", "Komisyonsuz"].includes(val);
+    const validPaymentTypes = ["Gemide", "Cari", "Comp", "Komisyonsuz"];
+    const paymentType =
+      rest.paymentType && validPaymentTypes.includes(rest.paymentType)
+        ? rest.paymentType
+        : "Gemide";
 
-    const paymentType: PaymentType = isValidPaymentType(rest.paymentType)
-      ? rest.paymentType
-      : "Gemide";
-
-    // fullPrice hesapla
     const fullPrice =
-      (companyRate.m1 * m1) +
-      (companyRate.m2 * m2) +
-      (companyRate.m3 * m3) +
-      (companyRate.v1 * v1) +
-      (companyRate.v2 * v2);
+      companyRate.m1 * m1Count +
+      companyRate.m2 * m2Count +
+      companyRate.m3 * m3Count +
+      companyRate.v1 * v1Count +
+      companyRate.v2 * v2Count;
 
-    // 🔢 Benzersiz rezervasyon numarası üret
     async function generateUniqueReservationNo(): Promise<number> {
       let unique = false;
       let number = 0;
@@ -143,20 +179,17 @@ app.post("/api/reservations", async (req, res) => {
       }
       return number;
     }
-
     const reservationNo = await generateUniqueReservationNo();
 
-    // 💾 Kayıt
     const newReservation = await prisma.reservation.create({
       data: {
         ...rest,
-        paymentType,
-        date: isoDate,
-        m1,
-        m2,
-        m3,
-        v1,
-        v2,
+        date: isoDate.toISOString(),
+        m1: m1Count,
+        m2: m2Count,
+        m3: m3Count,
+        v1: v1Count,
+        v2: v2Count,
         full,
         half,
         infant,
@@ -164,30 +197,26 @@ app.post("/api/reservations", async (req, res) => {
         totalPerson,
         arrivalTransfer: arrivalTransferSafe,
         returnTransfer: returnTransferSafe,
-        arrivalLocation: arrivalTP?.location?.locationName ?? null,
-        returnLocation: returnTP?.location?.locationName ?? null,
-        tour,
+        arrivalLocation: arrivalTP?.location?.locationName || null,
+        returnLocation: returnTP?.location?.locationName || null,
+        tour: tourString,
         reservationNo,
         companyRateId,
         fullPrice,
+        paymentType,
         createdAt: new Date(),
       },
     });
 
-    res.status(201).json(newReservation);
+    return res.status(201).json(newReservation);
   } catch (error) {
     console.error("Create reservation error:", error);
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-      res.status(500).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: "Unknown error" });
-    }
+    return res.status(500).json({
+      error: "Rezervasyon oluşturulamadı",
+      details: error instanceof Error ? error.message : undefined,
+    });
   }
 });
-
-
 
 
 // PUT /api/reservations/:id

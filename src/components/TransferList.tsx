@@ -1,8 +1,20 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useReservationStore } from "../store/useReservationStore";
 
 const TransferList = () => {
   const { reservations, fetchReservations } = useReservationStore();
+  const [filteredByDate, setFilteredByDate] = useState<string>(new Date().toISOString().slice(0, 10) );
+  const [filterByClient, setFilterByClient] = useState<string>("");
+
+  // Filter by client name
+  const filteredByClient = filterByClient ? 
+  reservations.filter(reservation => reservation.companyRate?.company.toLowerCase().includes(filterByClient.toLowerCase())) : reservations;
+
+  const filterDate = filteredByDate || new Date().toISOString().slice(0, 10);
+
+   const filteredReservations = reservations.filter(
+    (res) => res.date.slice(0, 10) === filterDate
+  );
 
   useEffect(() => {
     fetchReservations();
@@ -10,8 +22,20 @@ const TransferList = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-semibold mb-4">Transfer Listesi</h2>
+      <div className="flex justify-center items-center mb-4 gap-2">
+        <input type="date"
+          value={filteredByDate}
+          onChange={(e) => setFilteredByDate(e.target.value)}
+          className="border rounded px-2 py-1 mb-4"
+        />
+        
+        <input type="text" placeholder="Ara (Şirket Adı)"
+        value={filterByClient}
+        onChange={(e) => setFilterByClient(e.target.value)}
+        className="border rounded px-2 py-1 mb-4"
+        />
 
+      </div>
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-300 rounded-lg divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -49,7 +73,8 @@ const TransferList = () => {
               </tr>
             )}
 
-            {reservations.map((reservation) => (
+            {filteredReservations.map((reservation) => (
+              filteredByClient.includes(reservation) && (
               <tr
                 key={reservation.id}
                 className="hover:bg-gray-50 transition-colors duration-200"
@@ -68,6 +93,7 @@ const TransferList = () => {
                   {reservation.description || '-'}
                 </td>
               </tr>
+              )
             ))}
           </tbody>
         </table>

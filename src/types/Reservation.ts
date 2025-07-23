@@ -74,12 +74,18 @@ export interface Reservation {
   createdAt: string;
 }
 
+export type MenuPersonCount = {
+  full: number;
+  half: number;
+  infant: number;
+  guide: number;
+};
 
 export interface ReservationInput {
   date: string;
   room?: string;
   voucherNo?: string;
-  nationality?: string;  // artık boş bırakılabilir
+  nationality?: string;
   description?: string;
   transferNote?: string;
   ship: string;
@@ -89,25 +95,21 @@ export interface ReservationInput {
   resTakerId: string;
   authorizedId: string;
 
-  arrivalTransfer?: string,
+  arrivalTransfer?: string;
   returnTransfer?: string;
 
-  arrivalLocation?: string; // Transfer Arrival Location (optional)
-  returnLocation?: string; // Transfer Return Location (optional)
+  arrivalLocation?: string;
+  returnLocation?: string;
 
   saloonId: string;
   resTableId: string;
 
-  m1: number;
-  m2: number;
-  m3: number;
-  v1: number;
-  v2: number;
-
-  full: number;
-  half: number;
-  infant: number;
-  guide: number;
+  // Menü adetleri artık her menü için kişi sayıları ayrı
+  m1: MenuPersonCount;
+  m2: MenuPersonCount;
+  m3: MenuPersonCount;
+  v1: MenuPersonCount;
+  v2: MenuPersonCount;
 
   tour: string[];
 

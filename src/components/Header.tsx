@@ -13,12 +13,14 @@ const pages = [
   { path: '/app/transfer-locations', label: 'Bölgeler' },
   { path: '/app/company-rates', label: 'Şirket Fiyatları' },
   { path: '/app/general-income', label: 'Genel Fiyatlar' },
+  { path: '/app/table-layout', label: 'Masa Düzeni' },
 ];
 
 const shipMenuPaths = [
   '/app/reservations',
   '/app/transfer-list',
   '/app/welcome-list',
+  '/app/table-layout',
 ];
 
 const definitionGroups: { [title: string]: string[] } = {
@@ -35,25 +37,25 @@ const Header = () => {
     pages.find((p) => p.path === path)?.label || path;
 
   return (
-    <header className="shadow bg-[#C4D9FF] text-black items-center justify-center flex">
+    <header className="shadow bg-[#D2E0FB] text-black items-center justify-center flex">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-start h-16 space-x-8 items-center">
 
           {/* ===== Gemi Menüsü ===== */}
           <div className="relative group">
-            <button className="text-black hover:text-blue-600 font-medium px-3 py-2">
+            <button className="text-gray-600 hover:text-black font-medium px-3 py-2">
               Gemi
             </button>
             <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg 
                             opacity-0 invisible group-hover:visible group-hover:opacity-100 
                             transition-all duration-200 z-20">
-              <div className="py-1 text-sm text-black">
+              <div className="py-1 text-sm text-[#fffff]">
                 {shipMenuPaths.map((path) => (
                   <Link
                     key={path}
                     to={path}
                     className={`block px-4 py-2 hover:bg-gray-100 ${
-                      location.pathname === path ? 'text-blue-600' : ''
+                      location.pathname === path ? 'text-[#fffff]' : ''
                     }`}
                   >
                     {getPageLabel(path)}
@@ -65,7 +67,7 @@ const Header = () => {
 
           {/* ===== Muhasebe Menüsü ===== */}
           <div className="relative group">
-            <button className="text-black hover:text-blue-600 font-medium px-3 py-2">
+            <button className="text-gray-600 hover:text-black font-medium px-3 py-2">
               Muhasebe
             </button>
             <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg 
@@ -87,7 +89,7 @@ const Header = () => {
 
           {/* ===== Tanımlar Menüsü ===== */}
           <div className="relative group">
-            <button className="text-black hover:text-blue-600 font-medium px-3 py-2">
+            <button className="text-gray-600 hover:text-black font-medium px-3 py-2">
               Tanımlar
             </button>
             <div className="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg 

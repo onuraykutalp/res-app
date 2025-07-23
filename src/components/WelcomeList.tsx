@@ -12,7 +12,7 @@ const WelcomeList = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-semibold mb-4">Transfer Listesi</h2>
+      <h2 className="text-2xl font-semibold mb-4">Karşılama Listesi</h2>
 
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-300 rounded-lg divide-y divide-gray-200">
