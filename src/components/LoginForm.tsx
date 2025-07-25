@@ -32,7 +32,7 @@ export const LoginForm = () => {
   return (
     <form onSubmit={handleSubmit} className="max-w-sm mx-auto p-4 border rounded">
       <div>
-        <label>Username</label>
+        <label>Kullanıcı Adı</label>
         <input
           type="text"
           value={username}
@@ -42,7 +42,7 @@ export const LoginForm = () => {
         />
       </div>
       <div className="mt-2">
-        <label>Password</label>
+        <label>Şifre</label>
         <input
           type="password"
           value={password}
@@ -55,7 +55,7 @@ export const LoginForm = () => {
       <button
         type="submit"
         disabled={loading}
-        className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        className="mt-4 bg-[#555879] text-white px-4 py-2 rounded hover:bg-[#6f74a0]"
       >
         {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
       </button>

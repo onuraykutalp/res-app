@@ -13,7 +13,7 @@ export interface Register {
     billingGroupId: string,
     income: number, // buraya girilen değeri Income.ts içerisnden gelen tax oranını hesaplayıp Billing Group tablosuna göndericek
     outcome: number,
-    currency: "TL" | "USD" | "EUR" | "GBP",
+    currency: "TRY" | "USD" | "EUR" | "GBP",
     description?: string,
     billDate: string,
     registerDate: string,

@@ -306,3 +306,24 @@ model Reservation {
 
   createdAt DateTime @default(now())
 }
+
+
+// ======================OUTCOMES==========================
+
+model OutcomeGroup {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now())
+
+  outcomes  Outcome[] // Relation to Outcome
+}
+
+model Outcome {
+  id          String        @id @default(uuid())
+  groupId     String
+  group       OutcomeGroup  @relation(fields: [groupId], references: [id])
+  name        String
+  ship        Boolean
+  accountant  Boolean
+  createdAt   DateTime      @default(now())
+}

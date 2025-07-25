@@ -88,151 +88,131 @@ const ReservationList: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto p-4 justify-center items-center flex flex-col overflow-hidden">
-      <h1 className='font-bold text-3xl mb-4 text-[#555879]'>Transfer Listesi</h1>
-      <div className="flex flex-col sm:flex-row justify-between gap-2 w-full">
-        <input
-          type="date"
-          value={filterDate}
-          onChange={(e) => setFilterDate(e.target.value)}
-          className="border rounded px-2 py-1 mb-4"
-        />
-        <input
-          type="text"
-          value={filterByCompany}
-          onChange={(e) => setFilterByCompany(e.target.value)}
-          placeholder="Ara (Müşteri/Firma)"
-          className="border rounded px-2 py-1 mb-4"
-        />
-      </div>
-      <div className="w-full overflow-x-auto">
-        <div className="w-full overflow-x-auto">
-          <table className="min-w-[900px] w-full table-auto border border-collapse">
-            <thead>
-              <tr className="bg-gray-100 text-center">
-                <th className="border px-2 py-1">Rez. No</th>
-                <th className="border px-2 py-1">Rez.Tarih</th>
-                <th className="border px-2 py-1">G/D Transfer Noktası</th>
-                <th className="border px-2 py-1">Müşteri (Firma)</th>
-                <th className="border px-2 py-1">M1</th>
-                <th className="border px-2 py-1">M2</th>
-                <th className="border px-2 py-1">M3</th>
-                <th className="border px-2 py-1">V1</th>
-                <th className="border px-2 py-1">V2</th>
-                <th className="border px-2 py-1">T</th>
-                <th className="border px-2 py-1">Y</th>
-                <th className="border px-2 py-1">F</th>
-                <th className="border px-2 py-1">R</th>
-                <th className="border px-2 py-1">TK</th>
-                <th className="border px-2 py-1">Oda</th>
-                <th className="border px-2 py-1">Uyr</th>
-                <th className="border px-2 py-1">Masa</th>
-                <th className="border px-2 py-1">Tur</th>
-                <th className="border px-2 py-1">Açıklama</th>
-                <th className="border px-2 py-1">Ödeme</th>
-                <th className="border px-2 py-1">Rez. Veren</th>
-                <th className="border px-2 py-1">Rez. Alan</th>
-                <th className="border px-2 py-1">Tahsilat</th>
-                <th className="border px-2 py-1">Fir. Ücr.</th>
-                <th className="border px-2 py-1">Rez. Fiyat</th>
-                <th className="border px-2 py-1">İşlemler</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredReservations.map((res) => (
-                filteredByCompany.length > 0 && !filteredByCompany.includes(res) ? null : (
-                  <tr key={res.id} className="text-center">
-                    <td className="border px-2 py-1">
-                      {res.reservationNo}
-                    </td>
-                    <td className="border px-2 py-1">
-                      {editingId === res.id ? (
-                        <textarea
-                          name="description"
-                          value={
-                            editedReservation.date
-                              ? new Date(editedReservation.date).toISOString().slice(0, 16)
-                              : ""
-                          }
-                          onChange={handleChange}
-                          className="border rounded px-1 py-0.5 w-full"
-                          rows={2}
-                        />
-                      ) : (
-                        new Date(res.date).toLocaleDateString("tr-TR")
-                      )}
-                    </td>
-                    <td className="border px-2 py-1">{res.arrivalTransfer || "-"}</td>
-                    <td className="border px-2 py-1">{res.companyRate?.company || "-"}</td>
-                    <td className="border px-2 py-1">{res.m1 || "-"}</td>
-                    <td className="border px-2 py-1">{res.m2 || "-"}</td>
-                    <td className="border px-2 py-1">{res.m3 || "-"}</td>
-                    <td className="border px-2 py-1">{res.v1 || "-"}</td>
-                    <td className="border px-2 py-1">{res.v2 || "-"}</td>
-                    <td className="border px-2 py-1">{res.full || "-"}</td>
-                    <td className="border px-2 py-1">{res.half || "-"}</td>
-                    <td className="border px-2 py-1">{res.infant || "-"}</td>
-                    <td className="border px-2 py-1">{res.guide || "-"}</td>
-                    <td className="border px-2 py-1">{res.totalPerson || "-"}</td>
-                    <td className="border px-2 py-1">{res.room || "-"}</td>
-                    <td className="border px-2 py-1">{res.nationality || "-"}</td>
-                    <td className="border px-2 py-1">{res.resTable?.name || "-"}</td>
-                    <td className="border px-2 py-1">{res.tour || "-"}</td>
-                    <td className="border px-2 py-1">{res.description || "-"}</td>
-                    <td className="border px-2 py-1">{res.paymentType || "-"}</td>
-                    <td className="border px-2 py-1">{res.companyRate?.company || "-"}</td>
-                    <td className="border px-2 py-1">{res.resTaker?.username || "-"}</td>
-                    <td className="border px-2 py-1">{res.moneyReceived || "-"}</td>
-                    <td className="border px-2 py-1">{res.moneyToPayCompany || "-"}</td>
-                    <td className="border px-2 py-1">{res.fullPrice || "-"}</td>
-                    <td className="border px-2 py-1 space-x-2">
-                      {editingId === res.id ? (
-                        <>
-                          <button
-                            className="bg-green-500 text-white px-2 py-1 rounded"
-                            onClick={handleUpdate}
-                          >
-                            Kaydet
-                          </button>
-                          <button
-                            className="bg-gray-400 text-white px-2 py-1 rounded"
-                            onClick={() => setEditingId(null)}
-                          >
-                            Vazgeç
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            className="bg-blue-500 text-white px-2 py-1 rounded"
-                            onClick={() => handleEdit(res)}
-                          >
-                            <FaEdit />
-                          </button>
-                          <button
-                            className="bg-red-500 text-white px-2 py-1 rounded"
-                            onClick={() => handleDelete(res.id)}
-                          >
-                            <MdDeleteForever />
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                )
-              ))}
-              {reservations.length === 0 && (
-                <tr>
-                  <td colSpan={26} className="text-center p-4">
-                    Kayıt bulunamadı.
-                  </td>
-                </tr>
+    <div className="p-4">
+  <h1 className="text-2xl font-bold mb-4 text-[#555879] text-center">Rezervasyon Listesi</h1>
+
+  {/* Filtre alanı */}
+  <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
+    <input
+      type="date"
+      value={filterDate}
+      onChange={(e) => setFilterDate(e.target.value)}
+      className="border rounded px-3 py-2 w-full sm:w-1/3"
+    />
+    <input
+      type="text"
+      value={filterByCompany}
+      onChange={(e) => setFilterByCompany(e.target.value)}
+      placeholder="Ara (Müşteri/Firma)"
+      className="border rounded px-3 py-2 w-full sm:w-2/3"
+    />
+  </div>
+
+  {/* Liste */}
+  <div className="overflow-x-auto rounded-lg shadow border border-gray-200">
+    <table className="min-w-[1200px] w-full table-auto text-sm text-left">
+      <thead className="bg-gray-100 text-gray-700 text-xs uppercase">
+        <tr>
+          {[
+            'Rez. No', 'Rez.Tarih', 'G/D Nokta', 'Müşteri',
+            'M1', 'M2', 'M3', 'V1', 'V2',
+            'T', 'Y', 'F', 'R', 'TK', 'Oda', 'Uyr',
+            'Masa', 'Tur', 'Açıklama', 'Ödeme',
+            'Veren', 'Alan', 'Tahsilat', 'Fir. Ücr.', 'Fiyat', 'İşlem'
+          ].map((col, idx) => (
+            <th key={idx} className="px-4 py-3 whitespace-nowrap text-center border">{col}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-100 bg-white">
+        {filteredReservations.map((res) => (
+          <tr key={res.id} className="hover:bg-gray-50 text-center">
+            <td className="px-3 py-2 border">{res.reservationNo}</td>
+            <td className="px-3 py-2 border">
+              {editingId === res.id ? (
+                <input
+                  type="datetime-local"
+                  value={
+                    editedReservation.date
+                      ? new Date(editedReservation.date).toISOString().slice(0, 16)
+                      : ''
+                  }
+                  onChange={handleChange}
+                  name="date"
+                  className="border rounded px-1 py-0.5 w-full"
+                />
+              ) : new Date(res.date).toLocaleDateString("tr-TR")}
+            </td>
+            <td className="px-3 py-2 border">{res.arrivalTransfer || "-"}</td>
+            <td className="px-3 py-2 border">{res.companyRate?.company || "-"}</td>
+            <td className="px-2 py-1 border">{res.m1 || "-"}</td>
+            <td className="px-2 py-1 border">{res.m2 || "-"}</td>
+            <td className="px-2 py-1 border">{res.m3 || "-"}</td>
+            <td className="px-2 py-1 border">{res.v1 || "-"}</td>
+            <td className="px-2 py-1 border">{res.v2 || "-"}</td>
+            <td className="px-2 py-1 border">{res.full || "-"}</td>
+            <td className="px-2 py-1 border">{res.half || "-"}</td>
+            <td className="px-2 py-1 border">{res.infant || "-"}</td>
+            <td className="px-2 py-1 border">{res.guide || "-"}</td>
+            <td className="px-2 py-1 border">{res.totalPerson || "-"}</td>
+            <td className="px-2 py-1 border">{res.room || "-"}</td>
+            <td className="px-2 py-1 border">{res.nationality || "-"}</td>
+            <td className="px-2 py-1 border">{res.resTable?.name || "-"}</td>
+            <td className="px-2 py-1 border">{res.tour || "-"}</td>
+            <td className="px-2 py-1 border">{res.description || "-"}</td>
+            <td className="px-2 py-1 border">{res.paymentType || "-"}</td>
+            <td className="px-2 py-1 border">{res.companyRate?.company || "-"}</td>
+            <td className="px-2 py-1 border">{res.resTaker?.username || "-"}</td>
+            <td className="px-2 py-1 border">{res.moneyReceived || "-"}</td>
+            <td className="px-2 py-1 border">{res.moneyToPayCompany || "-"}</td>
+            <td className="px-2 py-1 border">{res.fullPrice || "-"}</td>
+            <td className="px-2 py-1 border space-x-2">
+              {editingId === res.id ? (
+                <>
+                  <button
+                    className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs"
+                    onClick={handleUpdate}
+                  >
+                    Kaydet
+                  </button>
+                  <button
+                    className="bg-gray-400 hover:bg-gray-500 text-white px-2 py-1 rounded text-xs"
+                    onClick={() => setEditingId(null)}
+                  >
+                    Vazgeç
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                    onClick={() => handleEdit(res)}
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
+                    onClick={() => handleDelete(res.id)}
+                  >
+                    <MdDeleteForever />
+                  </button>
+                </>
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+            </td>
+          </tr>
+        ))}
+        {filteredReservations.length === 0 && (
+          <tr>
+            <td colSpan={26} className="text-center p-4 text-gray-500">
+              Kayıt bulunamadı.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
+
   );
 };
 

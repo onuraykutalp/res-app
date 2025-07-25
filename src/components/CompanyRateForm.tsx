@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useCompanyRateStore } from "../store/useCompanyRateStore";
+import { AnimatePresence, motion } from "motion/react";
+import { GiCancel } from "react-icons/gi";
 
 export default function CompanyRateForm() {
   const addCompanyRate = useCompanyRateStore((s) => s.addCompanyRate);
@@ -14,6 +16,16 @@ export default function CompanyRateForm() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [description, setDescription] = useState("");
+
+  const [openForm, setOpenForm] = useState(false);
+
+  const openFormHandler = () => {
+    setOpenForm(true);
+  }
+
+  const closeFormHandler = () => {
+    setOpenForm(false);
+  }
 
   const handleSubmit = async () => {
     await addCompanyRate({
@@ -43,82 +55,240 @@ export default function CompanyRateForm() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <input
-        type="text"
-        placeholder="Şirket"
-        value={company}
-        onChange={(e) => setCompany(e.target.value)}
-        className="border px-3 py-2 rounded"
-      />
-      <input
-        type="number"
-        placeholder="M1"
-        value={m1}
-        onChange={(e) => setM1(parseFloat(e.target.value))}
-        className="border px-3 py-2 rounded"
-      />
-      <input
-        type="number"
-        placeholder="M2"
-        value={m2}
-        onChange={(e) => setM2(parseFloat(e.target.value))}
-        className="border px-3 py-2 rounded"
-      />
-      <input
-        type="number"
-        placeholder="M3"
-        value={m3}
-        onChange={(e) => setM3(parseFloat(e.target.value))}
-        className="border px-3 py-2 rounded"
-      />
-      <input
-        type="number"
-        placeholder="V1"
-        value={v1}
-        onChange={(e) => setV1(parseFloat(e.target.value))}
-        className="border px-3 py-2 rounded"
-      />
-      <input
-        type="number"
-        placeholder="V2"
-        value={v2}
-        onChange={(e) => setV2(parseFloat(e.target.value))}
-        className="border px-3 py-2 rounded"
-      />
-      <input
-        type="text"
-        placeholder="Para Birimi"
-        value={currency}
-        onChange={(e) => setCurrency(e.target.value)}
-        className="border px-3 py-2 rounded"
-      />
-      <input
-        type="date"
-        value={startDate}
-        onChange={(e) => setStartDate(e.target.value)}
-        className="border px-3 py-2 rounded"
-      />
-      <input
-        type="date"
-        value={endDate}
-        onChange={(e) => setEndDate(e.target.value)}
-        className="border px-3 py-2 rounded"
-      />
-      <input
-        type="text"
-        placeholder="Açıklama"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="border px-3 py-2 rounded md:col-span-2"
-      />
+    <div className="p-6 mx-auto max-w-4xl">
+      <div className="p-6 mx-auto max-w-4xl flex justify-center">
+        <button
+          onClick={openFormHandler}
+          className="bg-[#555879] p-3 rounded text-white hover:bg-[#44466a] transition-colors"
+        >
+          Şirket Fiyat Tanımı Ekle
+        </button>
+      </div>
 
-      <button
-        onClick={handleSubmit}
-        className="bg-blue-600 text-white px-4 py-2 rounded md:col-span-2 hover:bg-blue-700"
-      >
-        Kaydet
-      </button>
+      <AnimatePresence>
+        {openForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            key="modal-backdrop"
+          >
+            <motion.div
+              initial={{ y: -30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -30, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-white rounded-xl shadow-xl max-w-3xl w-full mx-4 p-6 overflow-auto max-h-[90vh] relative"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-title"
+              key="modal-content"
+            >
+              <button onClick={closeFormHandler} className="absolute top-5 right-5"><GiCancel className="size-5 text-red-400" /></button>
+              <h2
+                id="modal-title"
+                className="text-2xl font-semibold mb-6 text-center text-[#555879]"
+              >
+                Şirket Fiyat Ekle
+              </h2>
+
+              <form className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                {/* Şirket */}
+                <div>
+                  <label
+                    htmlFor="company"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Şirket
+                  </label>
+                  <input
+                    id="company"
+                    type="text"
+                    placeholder="Şirket adı"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* M1 */}
+                <div>
+                  <label
+                    htmlFor="m1"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    M1
+                  </label>
+                  <input
+                    id="m1"
+                    type="number"
+                    placeholder="M1"
+                    value={m1}
+                    onChange={(e) => setM1(parseFloat(e.target.value))}
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* M2 */}
+                <div>
+                  <label
+                    htmlFor="m2"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    M2
+                  </label>
+                  <input
+                    id="m2"
+                    type="number"
+                    placeholder="M2"
+                    value={m2}
+                    onChange={(e) => setM2(parseFloat(e.target.value))}
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* M3 */}
+                <div>
+                  <label
+                    htmlFor="m3"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    M3
+                  </label>
+                  <input
+                    id="m3"
+                    type="number"
+                    placeholder="M3"
+                    value={m3}
+                    onChange={(e) => setM3(parseFloat(e.target.value))}
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* V1 */}
+                <div>
+                  <label
+                    htmlFor="v1"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    V1
+                  </label>
+                  <input
+                    id="v1"
+                    type="number"
+                    placeholder="V1"
+                    value={v1}
+                    onChange={(e) => setV1(parseFloat(e.target.value))}
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* V2 */}
+                <div>
+                  <label
+                    htmlFor="v2"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    V2
+                  </label>
+                  <input
+                    id="v2"
+                    type="number"
+                    placeholder="V2"
+                    value={v2}
+                    onChange={(e) => setV2(parseFloat(e.target.value))}
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Para Birimi */}
+                <div>
+                  <label
+                    htmlFor="currency"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Para Birimi
+                  </label>
+                  <input
+                    id="currency"
+                    type="text"
+                    placeholder="Örn: EUR, USD"
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Başlangıç Tarihi */}
+                <div>
+                  <label
+                    htmlFor="startDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Başlangıç Tarihi
+                  </label>
+                  <input
+                    id="startDate"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Bitiş Tarihi */}
+                <div>
+                  <label
+                    htmlFor="endDate"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Bitiş Tarihi
+                  </label>
+                  <input
+                    id="endDate"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Açıklama */}
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Açıklama
+                  </label>
+                  <input
+                    id="description"
+                    type="text"
+                    placeholder="İsteğe bağlı açıklama"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Buton */}
+                <div className="md:col-span-2 flex justify-center mt-4">
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    className="bg-[#555879] hover:bg-[#8185af] text-white px-6 py-2 rounded shadow transition-colors"
+                  >
+                    Kaydet
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+
   );
 }

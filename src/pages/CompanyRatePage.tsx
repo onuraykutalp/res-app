@@ -3,7 +3,7 @@ import CompanyRateList from "../components/CompanyRateList";
 
 export default function CompanyRatePage() {
   return (
-    <div className="max-w-6xl mx-auto py-8">
+    <div className="p-4">
       <CompanyRateForm />
       <hr className="my-6" />
       <CompanyRateList />

@@ -1,3 +1,4 @@
+import path from 'path';
 import { Link, useLocation } from 'react-router-dom';
 
 const pages = [
@@ -14,6 +15,7 @@ const pages = [
   { path: '/app/company-rates', label: 'Şirket Fiyatları' },
   { path: '/app/general-income', label: 'Genel Fiyatlar' },
   { path: '/app/table-layout', label: 'Masa Düzeni' },
+  { path: '/app/outcome-groups', label: 'Gider Grupları' }
 ];
 
 const shipMenuPaths = [
@@ -37,12 +39,14 @@ const Header = () => {
     pages.find((p) => p.path === path)?.label || path;
 
   return (
-    <header className="shadow bg-[#D2E0FB] text-black items-center justify-center flex">
+    <header className="shadow bg-[#D2E0FB] text-black items-center justify-start flex relative">
+      <img src="../public/img/bizkit-thin.png" alt="Bizkit Logo" className="h-8 w-auto absolute left-10 top-4" />'
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-start h-16 space-x-8 items-center">
 
           {/* ===== Gemi Menüsü ===== */}
           <div className="relative group">
+
             <button className="text-gray-600 hover:text-black font-medium px-3 py-2">
               Gemi
             </button>
@@ -54,9 +58,8 @@ const Header = () => {
                   <Link
                     key={path}
                     to={path}
-                    className={`block px-4 py-2 hover:bg-gray-100 ${
-                      location.pathname === path ? 'text-[#fffff]' : ''
-                    }`}
+                    className={`block px-4 py-2 hover:bg-gray-100 ${location.pathname === path ? 'text-[#fffff]' : ''
+                      }`}
                   >
                     {getPageLabel(path)}
                   </Link>
@@ -105,9 +108,8 @@ const Header = () => {
                       <Link
                         key={path}
                         to={path}
-                        className={`block px-4 py-1 hover:bg-gray-100 ${
-                          location.pathname === path ? 'text-blue-600' : ''
-                        }`}
+                        className={`block px-4 py-1 hover:bg-gray-100 ${location.pathname === path ? 'text-blue-600' : ''
+                          }`}
                       >
                         {getPageLabel(path)}
                       </Link>

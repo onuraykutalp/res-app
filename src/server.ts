@@ -84,15 +84,15 @@ app.post("/api/reservations", async (req, res) => {
 
     const arrivalTP = arrivalTransferSafe
       ? await prisma.transferPoint.findFirst({
-          where: { transferPointName: arrivalTransferSafe },
-          include: { location: true },
-        })
+        where: { transferPointName: arrivalTransferSafe },
+        include: { location: true },
+      })
       : null;
     const returnTP = returnTransferSafe
       ? await prisma.transferPoint.findFirst({
-          where: { transferPointName: returnTransferSafe },
-          include: { location: true },
-        })
+        where: { transferPointName: returnTransferSafe },
+        include: { location: true },
+      })
       : null;
 
     const companyRate = await prisma.companyRate.findUnique({
@@ -1008,6 +1008,147 @@ app.delete("/api/company-rates/:id", async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Delete failed" });
+  }
+});
+
+app.get('/api/outcome-groups', async (req, res) => {
+  try {
+    const outcomeGroups = await prisma.outcomeGroup.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(outcomeGroups);
+  } catch (error) {
+    console.error("Create reservation error:", error);
+    return res.status(500).json({
+      error: "Gider grupları alınamadı",
+      details: error instanceof Error ? error.message : undefined,
+    });
+  }
+});
+
+app.post('/api/outcome-groups', async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: "Gider grubu adı zorunludur" });
+    }
+    const newOutcomeGroup = await prisma.outcomeGroup.create({
+      data: {
+        name,
+        createdAt: new Date(),
+      },
+    });
+    res.json(newOutcomeGroup);
+  } catch (error) {
+    console.error("Create reservation error:", error);
+    return res.status(500).json({
+      error: "Gider oluşturulamadı",
+      details: error instanceof Error ? error.message : undefined,
+    });
+  }
+});
+
+app.put('/api/outcome-groups/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: "Gider grubu adı zorunludur" });
+    }
+    const updatedOutcomeGroup = await prisma.outcomeGroup.update({
+      where: { id },
+      data: {
+        name
+      }
+    });
+    res.json(updatedOutcomeGroup);
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({ error: "Gider grubu güncellenemedi" });
+  }
+});
+
+app.delete('/api/outcome-groups/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.outcomeGroup.delete({ where: { id } });
+    res.status(204).end();
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).json({ error: "Gider grubu silinemedi" });
+  }
+});
+
+app.get('/api/outcomes', async (req, res) => {
+  try {
+    const outComes = await prisma.outcome.findMany({
+      include: {
+        group: true,
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(outComes);
+  } catch (error) {
+    console.error("GET error:", error);
+    res.status(500).json({ error: "Gider grupları alınamadı." });
+  }
+});
+
+app.post('/api/outcomes', async (req, res) => {
+  try {
+    const { name, groupId, ship, accountant } = req.body;
+    const newOutcome = await prisma.outcome.create({
+        data: {
+          name,
+          ship,
+          accountant,
+          createdAt: new Date(),
+          group: {
+            connect: {
+              id: groupId, // Bu ID, OutcomeGroup modelindeki `id` alanı olmalı
+            },
+          }
+        }
+      });
+    res.json(newOutcome);
+  } catch (error) {
+    return res.status(500).json({
+      error: "Gider oluşturulamadı",
+      details: error instanceof Error ? error.message : undefined,
+    });
+  }
+});
+
+app.put('/api/outcomes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, groupId, ship, accountant } = req.body;
+    const updatedOutcome = await prisma.outcome.update({
+      where: { id },
+      data: {
+        name,
+        group: {
+          connect: { id: groupId }
+        },
+        ship,
+        accountant,
+      }
+    });
+    res.json(updatedOutcome);
+  } catch (error) {
+    console.error("PUT error:", error);
+    res.status(500).json({ error: "Gider tipi düzenlenemedi" });
+  }
+});
+
+app.delete('/api/outcomes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.outcome.delete({ where: { id } });
+    res.status(204).end();
+  } catch (error) {
+    console.error("DELETE error", error);
+    res.status(500).json({ error: "Gider tipi silinemedi" });
   }
 });
 
