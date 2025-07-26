@@ -1098,18 +1098,18 @@ app.post('/api/outcomes', async (req, res) => {
   try {
     const { name, groupId, ship, accountant } = req.body;
     const newOutcome = await prisma.outcome.create({
-        data: {
-          name,
-          ship,
-          accountant,
-          createdAt: new Date(),
-          group: {
-            connect: {
-              id: groupId, // Bu ID, OutcomeGroup modelindeki `id` alanı olmalı
-            },
-          }
+      data: {
+        name,
+        ship,
+        accountant,
+        createdAt: new Date(),
+        group: {
+          connect: {
+            id: groupId, // Bu ID, OutcomeGroup modelindeki `id` alanı olmalı
+          },
         }
-      });
+      }
+    });
     res.json(newOutcome);
   } catch (error) {
     return res.status(500).json({
@@ -1149,6 +1149,70 @@ app.delete('/api/outcomes/:id', async (req, res) => {
   } catch (error) {
     console.error("DELETE error", error);
     res.status(500).json({ error: "Gider tipi silinemedi" });
+  }
+});
+
+app.get('/api/incomes/', async (req, res) => {
+  try {
+    const incomes = await prisma.income.findMany({
+      orderBy: { 'createdAt': 'desc' }
+    })
+    res.json(incomes);
+  } catch (error) {
+    console.error("GET error", error);
+    res.status(500).json({ error: "Gelir tipleri alınamadı." });
+  }
+});
+
+app.post('/api/incomes', async (req, res) => {
+  try {
+    const { name, tax, ship, accountant } = req.body;
+    const newIncome = await prisma.income.create({
+      data: {
+        name,
+        tax,
+        ship,
+        accountant,
+      }
+    });
+    res.json(newIncome);
+  } catch (error) {
+    return res.status(500).json({
+      error: "Gelir tipi oluşturulamadı",
+      details: error instanceof Error ? error.message : undefined,
+    });
+  }
+});
+
+app.put('/api/incomes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, tax, ship, accountant } = req.body;
+    const updatedIncome = await prisma.income.update({
+      where: { id },
+      data: {
+        name,
+        tax,
+        ship,
+        accountant
+      }
+    });
+    res.json(updatedIncome);
+  } catch (error) {
+    return res.status(500).json({
+      error: "Gelir tipi oluşturulamadı",
+      details: error instanceof Error ? error.message : undefined,
+    });
+  }
+});
+
+app.delete('/api/incomes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.income.delete({ where: { id } });
+  } catch (error) {
+    console.error("DELETE error", error);
+    res.status(500).json({ error: "Gelir tipi silinemedi"});
   }
 });
 

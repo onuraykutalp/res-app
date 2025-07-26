@@ -20,6 +20,7 @@ import WelcomeListPage from './pages/WelcomeListPage';
 import TableLayoutPage from './pages/TableLayoutPage';
 import OutcomeGroupPage from './pages/OutcomeGroupPage';
 import OutcomePage from './pages/OutcomePage';
+import IncomePage from './pages/IncomePage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
@@ -61,6 +62,7 @@ export function App() {
           <Route path="saloons" element={<SaloonPage />} />
           <Route path="company-rates" element={<CompanyRatePage />} />
           <Route path="general-income" element={<GeneralIncomePage />} />
+          <Route path="incomes" element={<IncomePage />} />
           <Route path="outcome-groups" element={<OutcomeGroupPage />} />
           <Route path="outcomes" element={<OutcomePage />} />
         </Route>

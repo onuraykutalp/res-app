@@ -1,8 +1,8 @@
 export interface Income {
     id: string,
-    incomeName: string,
-    incomeTax: number,
-    showShip: boolean,
-    showAccountant: boolean,
+    name: string,
+    tax: number,
+    ship: boolean,
+    accountant: boolean,
     createdAt: string,
 }

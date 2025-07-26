@@ -137,9 +137,9 @@ model GeneralIncome {
 }
 
 model Income {
-  incomeId   String   @id @default(uuid())
-  incomeName String
-  incomeTax  Float
+  id   String   @id @default(uuid())
+  name String
+  tax  Float
   ship       Boolean
   accountant Boolean
   createdAt  DateTime @default(now())

@@ -1,21 +1,39 @@
-import { BillingGroup } from "./BillingGroup"
-import { Employee } from "./Employee"
-import { Income } from "./Income"
+import { Reservation } from "./Reservation";
+import { CompanyRate } from "./CompanyRate";
+import { Employee } from "./Employee";
+import { Account } from "./Account";
+
+export type SourceType = "COMPANY" | "EMPLOYEE";
 
 export interface Register {
-    id: string,
-    ship: string,
-    resNo?: number,
-    otel?: string,
-    agencyOrOtel?: string,
-    registerGroup: Income,
-    calculationType: BillingGroup,
-    billingGroupId: string,
-    income: number, // buraya girilen değeri Income.ts içerisnden gelen tax oranını hesaplayıp Billing Group tablosuna göndericek
-    outcome: number,
-    currency: "TRY" | "USD" | "EUR" | "GBP",
-    description?: string,
-    billDate: string,
-    registerDate: string,
-    whoRegistered: Employee,
+  id: string;
+  ship: string;
+
+  reservationId?: string | null;
+  reservation?: Reservation | null;
+
+  companyRateId?: string | null;
+  companyRate?: CompanyRate | null;
+
+  sourceType: SourceType;
+  sourceId?: string | null;
+  employeeSource?: Employee | null;
+  companySource?: CompanyRate | null;
+
+  registerGroup: string;
+
+  accountId: string;
+  account?: Account;
+
+  entry?: number;
+  exit?: number;
+
+  currency: string;
+  description?: string;
+
+  invoiceDate: Date;
+  createdAt: Date;
+
+  createdByEmployeeId: string;
+  createdBy?: Employee;
 }

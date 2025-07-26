@@ -47,56 +47,94 @@ const OutcomeGroupList = () => {
     }
 
   return (
-    <div>
-        <table className='min-w-full border'>
-            <thead className='bg-gray-100 text-sm text-left'>
-                <tr className='border-b'>
-                    <th>Grup Adı</th>
-                    <th>İşlemler</th>
-                </tr>
-            </thead>
-            <tbody>
-                { outcomeGroups.length < 0 ? (
-                    <tr><td colSpan={2}>No outcome groups found</td></tr>
-                ) : (
-                    outcomeGroups.map((group) => (
-                        <tr key={group.id} className="border-b">
-                            <td>
-                                {
-                                    editingId === group.id ? (
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            value={formState.name || group.name}
-                                            onChange={handleChange}
-                                            className="border px-3 py-2 rounded"
-                                        />
-                                    ) : (
-                                        group.name
-                                    )
-                                }
-                            </td>
-                            <td>
-                                {
-                                    editingId === group.id ? (
-                                        <>
-                                        <button className='bg-[#555879] text-white px-4 py-2 rounded' onClick={handleSave}>Kaydet</button>
-                                        <button className='bg-[#f44336] text-white px-4 py-2 rounded' onClick={handleCancel}>İptal</button>
-                                        </>
-                                    ) : (
-                                        <>
-                                        <button className='bg-[#555879] text-white px-4 py-2 rounded' onClick={() => handleEdit(group)}>Düzenle</button>
-                                        <button className='bg-[#f44336] text-white px-4 py-2 rounded' onClick={() => deleteOutcomeGroup(group.id)}>Sil</button>
-                                        </>
-                                    )
-                                }
-                            </td>
-                        </tr>
-                    ))
-                )}
-            </tbody>
-        </table>
-    </div>
+    <div className="p-4">
+  <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+    <table className="min-w-full bg-white divide-y divide-gray-200 text-sm">
+      <thead className="bg-gray-100 text-gray-700 text-xs font-semibold uppercase tracking-wide">
+        <tr>
+          <th className="px-4 py-3 text-center w-1/2">Grup Adı</th>
+          <th className="px-4 py-3 text-center w-1/2">İşlemler</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-100">
+        {outcomeGroups.length === 0 ? (
+          <tr>
+            <td
+              colSpan={2}
+              className="px-4 py-4 text-center text-gray-500 text-sm"
+            >
+              No outcome groups found
+            </td>
+          </tr>
+        ) : (
+          outcomeGroups.map((group) => {
+            const isEditing = editingId === group.id;
+
+            return (
+              <tr
+                key={group.id}
+                className="hover:bg-gray-50 transition duration-200"
+              >
+                <td className="px-4 py-3 text-center align-middle">
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="name"
+                      value={formState.name || group.name}
+                      onChange={handleChange}
+                      className="border border-gray-300 px-3 py-2 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <span className="text-gray-800 font-medium">
+                      {group.name}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
+                    {isEditing ? (
+                      <>
+                        <button
+                          className="w-full sm:w-auto bg-[#555879] hover:bg-[#44455e] text-white px-4 py-2 rounded-md text-sm transition"
+                          onClick={handleSave}
+                        >
+                          Kaydet
+                        </button>
+                        <button
+                          className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm transition"
+                          onClick={handleCancel}
+                        >
+                          İptal
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="w-full sm:w-auto bg-[#555879] hover:bg-[#44455e] text-white px-4 py-2 rounded-md text-sm transition"
+                          onClick={() => handleEdit(group)}
+                        >
+                          Düzenle
+                        </button>
+                        <button
+                          className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm transition"
+                          onClick={() => deleteOutcomeGroup(group.id)}
+                        >
+                          Sil
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
   )
 }
 

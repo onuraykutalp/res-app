@@ -15,7 +15,9 @@ const pages = [
   { path: '/app/company-rates', label: 'Şirket Fiyatları' },
   { path: '/app/general-income', label: 'Genel Fiyatlar' },
   { path: '/app/table-layout', label: 'Masa Düzeni' },
-  { path: '/app/outcome-groups', label: 'Gider Grupları' }
+  { path: '/app/incomes', label: 'Gelir Tanımları' },
+  { path: '/app/outcome-groups', label: 'Gider Grupları' },
+  { path: '/app/outcomes', label: 'Gider Tanımları' }
 ];
 
 const shipMenuPaths = [
@@ -29,6 +31,7 @@ const definitionGroups: { [title: string]: string[] } = {
   'Müşteri Tanımları': ['/app/clients', '/app/company-rates'],
   'Mekan Tanımları': ['/app/saloons', '/app/tables'],
   'Transfer Tanımları': ['/app/transfer-locations'],
+  'Gelir/Gider Tanımları': ['/app/incomes', '/app/outcomes', '/app/outcome-groups'],
   Genel: ['/app/employees', '/app/employee-groups', '/app/general-income'],
 };
 
@@ -40,7 +43,7 @@ const Header = () => {
 
   return (
     <header className="shadow bg-[#D2E0FB] text-black items-center justify-start flex relative">
-      <img src="../public/img/bizkit-thin.png" alt="Bizkit Logo" className="h-8 w-auto absolute left-10 top-4" />'
+      <a href='/app/reservations'><img src="../public/img/bizkit-thin.png" alt="Bizkit Logo" className="h-8 w-auto absolute left-10 top-4" /></a>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-start h-16 space-x-8 items-center">
 
