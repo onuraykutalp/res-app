@@ -6,7 +6,7 @@ import { GiCancel } from "react-icons/gi";
 export default function CompanyRateForm() {
   const addCompanyRate = useCompanyRateStore((s) => s.addCompanyRate);
 
-  const [company, setCompany] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [m1, setM1] = useState(0);
   const [m2, setM2] = useState(0);
   const [m3, setM3] = useState(0);
@@ -21,37 +21,53 @@ export default function CompanyRateForm() {
 
   const openFormHandler = () => {
     setOpenForm(true);
-  }
+  };
 
   const closeFormHandler = () => {
     setOpenForm(false);
-  }
+  };
 
   const handleSubmit = async () => {
-    await addCompanyRate({
-      company,
-      m1,
-      m2,
-      m3,
-      v1,
-      v2,
-      currency,
-      startDate,
-      endDate,
-      description,
-    });
+    if (!companyName.trim()) {
+      alert("Lütfen şirket adı giriniz.");
+      return;
+    }
+    if (!currency.trim()) {
+      alert("Lütfen para birimini giriniz.");
+      return;
+    }
 
-    // Form sıfırla
-    setCompany("");
-    setM1(0);
-    setM2(0);
-    setM3(0);
-    setV1(0);
-    setV2(0);
-    setCurrency("");
-    setStartDate("");
-    setEndDate("");
-    setDescription("");
+    try {
+      await addCompanyRate({
+        companyName: companyName.trim(),
+        m1,
+        m2,
+        m3,
+        v1,
+        v2,
+        currency: currency.trim().toUpperCase(),
+        startDate,
+        endDate,
+        description,
+      });
+
+      // Form sıfırlama
+      setCompanyName("");
+      setM1(0);
+      setM2(0);
+      setM3(0);
+      setV1(0);
+      setV2(0);
+      setCurrency("");
+      setStartDate("");
+      setEndDate("");
+      setDescription("");
+
+      closeFormHandler();
+    } catch (error) {
+      console.error("CompanyRate eklenirken hata oluştu:", error);
+      alert("Şirket fiyatı eklenirken hata oluştu.");
+    }
   };
 
   return (
@@ -85,7 +101,13 @@ export default function CompanyRateForm() {
               aria-labelledby="modal-title"
               key="modal-content"
             >
-              <button onClick={closeFormHandler} className="absolute top-5 right-5"><GiCancel className="size-5 text-red-400" /></button>
+              <button
+                onClick={closeFormHandler}
+                className="absolute top-5 right-5"
+                aria-label="Kapat"
+              >
+                <GiCancel className="size-5 text-red-400" />
+              </button>
               <h2
                 id="modal-title"
                 className="text-2xl font-semibold mb-6 text-center text-[#555879]"
@@ -93,8 +115,13 @@ export default function CompanyRateForm() {
                 Şirket Fiyat Ekle
               </h2>
 
-              <form className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSubmit();
+                }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-5"
+              >
                 {/* Şirket */}
                 <div>
                   <label
@@ -107,9 +134,10 @@ export default function CompanyRateForm() {
                     id="company"
                     type="text"
                     placeholder="Şirket adı"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
                     className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
                   />
                 </div>
 
@@ -126,8 +154,10 @@ export default function CompanyRateForm() {
                     type="number"
                     placeholder="M1"
                     value={m1}
-                    onChange={(e) => setM1(parseFloat(e.target.value))}
+                    onChange={(e) => setM1(parseFloat(e.target.value) || 0)}
                     className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min={0}
+                    step={0.01}
                   />
                 </div>
 
@@ -144,8 +174,10 @@ export default function CompanyRateForm() {
                     type="number"
                     placeholder="M2"
                     value={m2}
-                    onChange={(e) => setM2(parseFloat(e.target.value))}
+                    onChange={(e) => setM2(parseFloat(e.target.value) || 0)}
                     className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min={0}
+                    step={0.01}
                   />
                 </div>
 
@@ -162,8 +194,10 @@ export default function CompanyRateForm() {
                     type="number"
                     placeholder="M3"
                     value={m3}
-                    onChange={(e) => setM3(parseFloat(e.target.value))}
+                    onChange={(e) => setM3(parseFloat(e.target.value) || 0)}
                     className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min={0}
+                    step={0.01}
                   />
                 </div>
 
@@ -180,8 +214,10 @@ export default function CompanyRateForm() {
                     type="number"
                     placeholder="V1"
                     value={v1}
-                    onChange={(e) => setV1(parseFloat(e.target.value))}
+                    onChange={(e) => setV1(parseFloat(e.target.value) || 0)}
                     className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min={0}
+                    step={0.01}
                   />
                 </div>
 
@@ -198,8 +234,10 @@ export default function CompanyRateForm() {
                     type="number"
                     placeholder="V2"
                     value={v2}
-                    onChange={(e) => setV2(parseFloat(e.target.value))}
+                    onChange={(e) => setV2(parseFloat(e.target.value) || 0)}
                     className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min={0}
+                    step={0.01}
                   />
                 </div>
 
@@ -218,6 +256,8 @@ export default function CompanyRateForm() {
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
                     className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={3}
+                    required
                   />
                 </div>
 
@@ -276,8 +316,7 @@ export default function CompanyRateForm() {
                 {/* Buton */}
                 <div className="md:col-span-2 flex justify-center mt-4">
                   <button
-                    type="button"
-                    onClick={handleSubmit}
+                    type="submit"
                     className="bg-[#555879] hover:bg-[#8185af] text-white px-6 py-2 rounded shadow transition-colors"
                   >
                     Kaydet
@@ -289,6 +328,5 @@ export default function CompanyRateForm() {
         )}
       </AnimatePresence>
     </div>
-
   );
 }

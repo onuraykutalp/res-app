@@ -69,20 +69,25 @@ model Supplier {
 
 // ======================= COMPANY RATE =======================
 model CompanyRate {
-  id          String   @id @default(uuid())
-  company     String
-  m1          Float
-  m2          Float
-  m3          Float
-  v1          Float
-  v2          Float
-  currency    String
-  startDate   DateTime
-  endDate     DateTime
-  description String?
-  createdAt   DateTime @default(now())
-
-  Reservation Reservation[]
+  id              String        @id @default(uuid())
+  companyName     String
+  companyType     String?
+  tax             Float @default(0)
+  m1 Float        @default(0)
+  m2 Float        @default(0)
+  m3 Float        @default(0)
+  v1 Float        @default(0)
+  v2 Float        @default(0)
+  currency        String        // ← 🔧 Burası eksikti
+  lastReservation DateTime?
+  description String? // opsiyonel açıklama
+  debt            Float?
+  credit          Float?
+  balance         Float?
+  startDate       DateTime
+  endDate         DateTime
+  createdAt       DateTime      @default(now())
+  reservations    Reservation[] @relation("CompanyRateReservation")
 }
 
 // ======================= DRIVER =======================
@@ -137,9 +142,9 @@ model GeneralIncome {
 }
 
 model Income {
-  id   String   @id @default(uuid())
-  name String
-  tax  Float
+  id         String   @id @default(uuid())
+  name       String
+  tax        Float
   ship       Boolean
   accountant Boolean
   createdAt  DateTime @default(now())
@@ -253,35 +258,35 @@ enum PaymentType {
 }
 
 model Reservation {
-  id              String   @id @default(uuid())
-  reservationNo   Int      @unique
-  date            DateTime
-  room            String?
-  voucherNo       String?
-  nationality     String?
-  description     String?
-  transferNote    String?
-  ship            String?
-  m1              Int      @default(0)
-  m2              Int      @default(0)
-  m3              Int      @default(0)
-  v1              Int      @default(0)
-  v2              Int      @default(0)
-  full            Int?
-  half            Int?
-  infant          Int?
-  guide           Int?
-  totalPerson     Int?
-  fullPrice       Float    @default(0)
-  tour            String?
+  id            String   @id @default(uuid())
+  reservationNo Int      @unique
+  date          DateTime
+  room          String?
+  voucherNo     String?
+  nationality   String?
+  description   String?
+  transferNote  String?
+  ship          String?
+  m1            Int      @default(0)
+  m2            Int      @default(0)
+  m3            Int      @default(0)
+  v1            Int      @default(0)
+  v2            Int      @default(0)
+  full          Int?
+  half          Int?
+  infant        Int?
+  guide         Int?
+  totalPerson   Int?
+  fullPrice     Float    @default(0)
+  tour          String?
 
-  moneyReceived     Float   @default(0)
-  moneyToPayCompany Float   @default(0)
+  moneyReceived     Float @default(0)
+  moneyToPayCompany Float @default(0)
 
-  paymentType  PaymentType
+  paymentType PaymentType
 
-  companyRateId String
-  companyRate   CompanyRate @relation(fields: [companyRateId], references: [id])
+  companyRateId String? // <-- optional hale getirdik
+  companyRate   CompanyRate? @relation("CompanyRateReservation", fields: [companyRateId], references: [id])
 
   resTakerId String
   resTaker   Employee @relation("ResTaker", fields: [resTakerId], references: [id])
@@ -289,41 +294,40 @@ model Reservation {
   authorizedId String
   authorized   Employee @relation("Authorized", fields: [authorizedId], references: [id])
 
-  saloonId String
-  saloon   Saloon @relation(fields: [saloonId], references: [id])
+  saloonId String?
+  saloon   Saloon? @relation(fields: [saloonId], references: [id])
 
-  resTableId String
-  resTable   ResTable @relation(fields: [resTableId], references: [id])
+  resTableId String?
+  resTable   ResTable? @relation(fields: [resTableId], references: [id])
 
   // Artık sadece bu string alanları kullanıyoruz:
-  arrivalTransfer  String?
-  returnTransfer   String?
+  arrivalTransfer String?
+  returnTransfer  String?
 
-  arrivalLocation  String?
-  returnLocation   String?
+  arrivalLocation String?
+  returnLocation  String?
 
   transfers Transfer[] // Transfer modeli ile bağlantı
 
   createdAt DateTime @default(now())
 }
 
-
 // ======================OUTCOMES==========================
 
 model OutcomeGroup {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  outcomes  Outcome[] // Relation to Outcome
+  outcomes Outcome[] // Relation to Outcome
 }
 
 model Outcome {
-  id          String        @id @default(uuid())
-  groupId     String
-  group       OutcomeGroup  @relation(fields: [groupId], references: [id])
-  name        String
-  ship        Boolean
-  accountant  Boolean
-  createdAt   DateTime      @default(now())
+  id         String       @id @default(uuid())
+  groupId    String
+  group      OutcomeGroup @relation(fields: [groupId], references: [id])
+  name       String
+  ship       Boolean
+  accountant Boolean
+  createdAt  DateTime     @default(now())
 }

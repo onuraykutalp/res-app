@@ -53,7 +53,7 @@ const WelcomeList = () => {
                     {reservation.arrivalTransfer || '-'} / {reservation.returnTransfer || '-'}
                   </td>
                   <td className="px-3 py-2 border whitespace-nowrap">
-                    {reservation.companyRate?.company || '-'}
+                    {reservation.companyRate?.companyName || '-'}
                   </td>
                   <td className="px-2 py-1 border">{reservation.full || '-'}</td>
                   <td className="px-2 py-1 border">{reservation.half || '-'}</td>

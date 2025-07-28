@@ -16,6 +16,7 @@ export const useCompanyRateStore = create<CompanyRateState>((set) => ({
 
   fetchCompanyRates: async () => {
     const res = await fetch("http://localhost:3001/api/company-rates");
+    if (!res.ok) throw new Error("API hata verdi: " + res.status);
     const data = await res.json();
     set({ companyRates: data });
   },

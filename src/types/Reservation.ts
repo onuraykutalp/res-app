@@ -36,10 +36,10 @@ export interface Reservation {
   returnLocation?: string; // Transfer Return Location (optional)
 
   // Salon ve masa bilgileri
-  saloonId: string;
+  saloonId?: string;
   saloon?: Saloon;
 
-  resTableId: string;
+  resTableId?: string;
   resTable?: ResTable;
 
   // Menü adetleri
@@ -101,8 +101,8 @@ export interface ReservationInput {
   arrivalLocation?: string;
   returnLocation?: string;
 
-  saloonId: string;
-  resTableId: string;
+  saloonId?: string;
+  resTableId?: string;
 
   // Menü adetleri artık her menü için kişi sayıları ayrı
   m1: MenuPersonCount;

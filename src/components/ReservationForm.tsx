@@ -25,11 +25,11 @@ export default function ReservationForm() {
 
   const [formData, setFormData] = useState<ReservationInput>({
     date: new Date().toISOString().slice(0, 16),
-    room: undefined,
-    voucherNo: undefined,
-    nationality: undefined,
-    description: undefined,
-    transferNote: undefined,
+    room: "",
+    voucherNo: "",
+    nationality: "",
+    description: "",
+    transferNote: "",
     ship: "",
     companyRateId: "",
     resTakerId: "",
@@ -80,7 +80,6 @@ export default function ReservationForm() {
   ) => {
     setFormData((prev) => {
       const updatedMenu = { ...prev[menuKey], [personType]: value };
-      // Güncellenmiş menü adetleri ile fullPrice hesapla
       const updatedForm = { ...prev, [menuKey]: updatedMenu };
       const fullPrice = calculateFullPrice(updatedForm);
       return { ...updatedForm, fullPrice };
@@ -120,6 +119,15 @@ export default function ReservationForm() {
       return;
     }
 
+    // moneyReceived, moneyToPayCompany, fullPrice sayı olarak alınıyor
+    if (["moneyReceived", "moneyToPayCompany", "fullPrice"].includes(name)) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: parseFloat(value) || 0,
+      }));
+      return;
+    }
+
     // Normal string/number input
     setFormData((prev) => ({
       ...prev,
@@ -144,14 +152,14 @@ export default function ReservationForm() {
     ];
     let total = 0;
 
-    menus.forEach((menuKey) => {
-      const menuCount = data[menuKey];
-      const basePrice = rate[menuKey] || 0;
+        menus.forEach((menuKey) => {
+          const menuCount = data[menuKey];
+          const basePrice = rate[menuKey] || 0;
 
-      total += menuCount.full * basePrice; // full price
-      total += menuCount.half * (basePrice / 2); // half price (yarı)
-      // infant ve guide ücret 0
-    });
+          total += menuCount.full * basePrice; // full price
+          total += menuCount.half * (basePrice / 2); // half price (yarı)
+          // infant ve guide ücret 0
+        });
 
     return total;
   };
@@ -159,7 +167,6 @@ export default function ReservationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // tour dizisi oluşturuluyor (örneğin ["2-M1", "3-M2"])
     const tour: string[] = [];
     (["m1", "m2", "m3", "v1", "v2"] as const).forEach((menuKey) => {
       const totalCount =
@@ -170,7 +177,6 @@ export default function ReservationForm() {
       if (totalCount > 0) tour.push(`${totalCount}-${menuKey.toUpperCase()}`);
     });
 
-    // toplam kişi sayısı (totalPerson)
     const totalPerson =
       (["m1", "m2", "m3", "v1", "v2"] as const).reduce(
         (sum, key) =>
@@ -193,22 +199,21 @@ export default function ReservationForm() {
       ...formData,
       tour,
       fullPrice: formData.fullPrice,
-      arrivalTransfer: selectedArrival?.transferPointName || undefined,
-      returnTransfer: selectedReturn?.transferPointName || undefined,
-      arrivalLocation: selectedArrival?.location?.locationName || undefined,
-      returnLocation: selectedReturn?.location?.locationName || undefined,
+      arrivalTransfer: selectedArrival?.transferPointName || "",
+      returnTransfer: selectedReturn?.transferPointName || "",
+      arrivalLocation: selectedArrival?.location?.locationName || "",
+      returnLocation: selectedReturn?.location?.locationName || "",
     };
 
     await createReservation(payload);
 
-    // formu resetle
     setFormData({
       date: new Date().toISOString().slice(0, 16),
-      room: undefined,
-      voucherNo: undefined,
-      nationality: undefined,
-      description: undefined,
-      transferNote: undefined,
+      room: "",
+      voucherNo: "",
+      nationality: "",
+      description: "",
+      transferNote: "",
       ship: "",
       companyRateId: "",
       resTakerId: "",
@@ -241,7 +246,7 @@ export default function ReservationForm() {
           className="bg-[#555879] hover:bg-[#4a4c68] text-white font-bold py-2 px-4 rounded"
         >
           {openForm ? "Formu Kapat" : "Yeni Rezervasyon Ekle"}
-        </button> 
+        </button>
       </div>
 
       <AnimatePresence>
@@ -252,51 +257,96 @@ export default function ReservationForm() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <form onSubmit={handleSubmit} className="p-6 bg-white shadow rounded-lg w-full flex flex-col gap-6">
+            <form
+              onSubmit={handleSubmit}
+              className="p-6 bg-white shadow rounded-lg w-full flex flex-col gap-6"
+            >
               <div className="flex flex-row gap-6">
                 {/* SOL BLOK */}
                 <div className="w-1/2 flex flex-row gap-4">
-                  {/* Rezervasyon Bilgileri (w-1/2) */}
+                  {/* Rezervasyon Bilgileri */}
                   <div className="w-1/2 border rounded p-4">
                     <h2 className="text-lg font-bold mb-4">Rezervasyon Bilgileri</h2>
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="date" className="w-32">Tarih</label>
-                        <input type="datetime-local" name="date" value={formData.date} onChange={handleChange} className="border px-3 py-2 rounded flex-1" />
+                        <label htmlFor="date" className="w-32">
+                          Tarih
+                        </label>
+                        <input
+                          type="datetime-local"
+                          name="date"
+                          value={formData.date}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        />
                       </div>
                       <div className="flex items-center gap-2">
-                        <label htmlFor="companyRateId" className="w-32">Müşteri</label>
-                        <select name="companyRateId" value={formData.companyRateId} onChange={handleChange} className="border px-3 py-2 rounded flex-1">
+                        <label htmlFor="companyRateId" className="w-32">
+                          Müşteri
+                        </label>
+                        <select
+                          name="companyRateId"
+                          value={formData.companyRateId}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        >
                           <option value="">Müşteri Seç</option>
                           {companyRates.map((rate) => (
-                            <option key={rate.id} value={rate.id}>{rate.company}</option>
+                            <option key={rate.id} value={rate.id}>
+                              {rate.companyName}
+                            </option>
                           ))}
                         </select>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="resTakerId" className="w-32">Rez. Alan</label>
-                        <select name="resTakerId" value={formData.resTakerId} onChange={handleChange} className="border px-3 py-2 rounded flex-1">
+                        <label htmlFor="resTakerId" className="w-32">
+                          Rez. Alan
+                        </label>
+                        <select
+                          name="resTakerId"
+                          value={formData.resTakerId}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        >
                           <option value="">Seçiniz</option>
                           {employees.map((e) => (
-                            <option key={e.id} value={e.id}>{e.name} {e.lastname}</option>
+                            <option key={e.id} value={e.id}>
+                              {e.name} {e.lastname}
+                            </option>
                           ))}
                         </select>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="authorizedId" className="w-32">Yetkili</label>
-                        <select name="authorizedId" value={formData.authorizedId} onChange={handleChange} className="border px-3 py-2 rounded flex-1">
+                        <label htmlFor="authorizedId" className="w-32">
+                          Yetkili
+                        </label>
+                        <select
+                          name="authorizedId"
+                          value={formData.authorizedId}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        >
                           <option value="">Seçiniz</option>
                           {employees.map((e) => (
-                            <option key={e.id} value={e.id}>{e.name} {e.lastname}</option>
+                            <option key={e.id} value={e.id}>
+                              {e.name} {e.lastname}
+                            </option>
                           ))}
                         </select>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="paymentType" className="w-32">Ödeme</label>
-                        <select name="paymentType" value={formData.paymentType} onChange={handleChange} className="border px-3 py-2 rounded flex-1">
+                        <label htmlFor="paymentType" className="w-32">
+                          Ödeme
+                        </label>
+                        <select
+                          name="paymentType"
+                          value={formData.paymentType}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        >
                           <option value="Gemide">Gemide</option>
                           <option value="Cari">Cari</option>
                           <option value="Comp">Comp</option>
@@ -304,80 +354,165 @@ export default function ReservationForm() {
                         </select>
                       </div>
                       <div className="flex items-center gap-2">
-                        <label htmlFor="room" className="w-32">Oda</label>
-                        <input type="text" name="room" value={formData.room || ""} onChange={handleChange} className="border px-3 py-2 rounded flex-1" />
+                        <label htmlFor="room" className="w-32">
+                          Oda
+                        </label>
+                        <input
+                          type="text"
+                          name="room"
+                          value={formData.room || ""}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        />
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="voucherNo" className="w-32">Voucher No</label>
-                        <input type="text" name="voucherNo" value={formData.voucherNo || ""} onChange={handleChange} className="border px-3 py-2 rounded flex-1" />
+                        <label htmlFor="voucherNo" className="w-32">
+                          Voucher No
+                        </label>
+                        <input
+                          type="text"
+                          name="voucherNo"
+                          value={formData.voucherNo || ""}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        />
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="nationality" className="w-32">Uyruk</label>
-                        <input type="text" name="nationality" value={formData.nationality || ""} onChange={handleChange} className="border px-3 py-2 rounded flex-1" />
+                        <label htmlFor="nationality" className="w-32">
+                          Uyruk
+                        </label>
+                        <input
+                          type="text"
+                          name="nationality"
+                          value={formData.nationality || ""}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        />
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="description" className="w-32">Notlar</label>
-                        <textarea name="description" value={formData.description || ""} onChange={handleChange} className="border px-3 py-2 rounded flex-1" />
+                        <label htmlFor="description" className="w-32">
+                          Notlar
+                        </label>
+                        <textarea
+                          name="description"
+                          value={formData.description || ""}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        />
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="transferNote" className="w-32">Transfer Notu</label>
-                        <textarea name="transferNote" value={formData.transferNote || ""} onChange={handleChange} className="border px-3 py-2 rounded flex-1" />
+                        <label htmlFor="transferNote" className="w-32">
+                          Transfer Notu
+                        </label>
+                        <textarea
+                          name="transferNote"
+                          value={formData.transferNote || ""}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        />
                       </div>
-
-
                     </div>
                   </div>
 
                   {/* Transfer ve Masa Bilgileri */}
                   <div className="w-1/2 border rounded p-4">
-                    <h2 className="text-lg font-bold mb-4">Transfer ve Masa Bilgileri</h2>
+                    <h2 className="text-lg font-bold mb-4">
+                      Transfer ve Masa Bilgileri
+                    </h2>
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="arrivalTransfer" className="w-32">Geliş Transfer</label>
-                        <select name="arrivalTransfer" value={formData.arrivalTransfer} onChange={handleChange} className="border px-3 py-2 rounded flex-1">
+                        <label htmlFor="arrivalTransfer" className="w-32">
+                          Geliş Transfer
+                        </label>
+                        <select
+                          name="arrivalTransfer"
+                          value={formData.arrivalTransfer}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        >
                           <option value="">Seçiniz</option>
                           {transferPoints.map((t) => (
-                            <option key={t.id} value={t.id}>{t.transferPointName}</option>
+                            <option key={t.id} value={t.id}>
+                              {t.transferPointName}
+                            </option>
                           ))}
                         </select>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="returnTransfer" className="w-32">Dönüş Transfer</label>
-                        <select name="returnTransfer" value={formData.returnTransfer} onChange={handleChange} className="border px-3 py-2 rounded flex-1">
+                        <label htmlFor="returnTransfer" className="w-32">
+                          Dönüş Transfer
+                        </label>
+                        <select
+                          name="returnTransfer"
+                          value={formData.returnTransfer}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        >
                           <option value="">Seçiniz</option>
                           {transferPoints.map((t) => (
-                            <option key={t.id} value={t.id}>{t.transferPointName}</option>
+                            <option key={t.id} value={t.id}>
+                              {t.transferPointName}
+                            </option>
                           ))}
                         </select>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="ship" className="w-32">Gemi</label>
-                        <input type="text" name="ship" value={formData.ship} onChange={handleChange} className="border px-3 py-2 rounded flex-1" />
+                        <label htmlFor="ship" className="w-32">
+                          Gemi
+                        </label>
+                        <input
+                          type="text"
+                          name="ship"
+                          value={formData.ship}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        />
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="saloonId" className="w-32">Salon</label>
-                        <select name="saloonId" value={formData.saloonId} onChange={handleChange} className="border px-3 py-2 rounded flex-1">
+                        <label htmlFor="saloonId" className="w-32">
+                          Salon
+                        </label>
+                        <select
+                          name="saloonId"
+                          value={formData.saloonId}
+                          onChange={handleChange}
+                          className="border px-3 py-2 rounded flex-1"
+                        >
                           <option value="">Salon Seç</option>
                           {saloons.map((s) => (
-                            <option key={s.id} value={s.id}>{s.saloonName}</option>
+                            <option key={s.id} value={s.id}>
+                              {s.saloonName}
+                            </option>
                           ))}
                         </select>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="resTableId" className="w-32">Masa</label>
-                        <select name="resTableId" value={formData.resTableId} onChange={handleChange} disabled={!formData.saloonId} className="border px-3 py-2 rounded flex-1">
+                        <label htmlFor="resTableId" className="w-32">
+                          Masa
+                        </label>
+                        <select
+                          name="resTableId"
+                          value={formData.resTableId}
+                          onChange={handleChange}
+                          disabled={!formData.saloonId}
+                          className="border px-3 py-2 rounded flex-1"
+                        >
                           <option value="">Masa Seçiniz</option>
-                          {resTables.filter((t) => t.saloon?.id === formData.saloonId).map((t) => (
-                            <option key={t.id} value={t.id}>{t.name} (Kapasite: {t.capacity})</option>
-                          ))}
+                          {resTables
+                            .filter((t) => t.saloon?.id === formData.saloonId)
+                            .map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name} (Kapasite: {t.capacity})
+                              </option>
+                            ))}
                         </select>
                       </div>
                     </div>
@@ -387,66 +522,74 @@ export default function ReservationForm() {
                 <div className="w-1/3 h-[275px] border rounded p-4 flex flex-col justify-between text-sm">
                   {/* Menü Girişleri: M1–V2 */}
                   <div className="flex flex-col gap-1">
-                    {(["m1", "m2", "m3", "v1", "v2"] as const).map((menuKey) => (
-                      <div
-                        key={menuKey}
-                        className="flex items-center justify-start gap-3"
-                      >
-                        <span className="font-semibold w-10">{menuKey.toUpperCase()}</span>
-                        {(["full", "half", "infant", "guide"] as const).map((type) => {
-                          // Disable "infant" and "half" for m1 and v2
-                          const isDisabled =
-                            (menuKey === "m1" || menuKey === "v1") &&
-                            (type === "infant" || type === "half");
-                          return (
-                            <div key={type} className="flex items-center gap-1">
-                              <label htmlFor={`${menuKey}-${type}`} className="w-12 text-right">
-                                {type}
-                              </label>
-                              <input
-                                id={`${menuKey}-${type}`}
-                                type="number"
-                                min={0}
-                                value={formData[menuKey][type]}
-                                onChange={(e) =>
-                                  handleMenuPersonCountChange(
-                                    menuKey,
-                                    type,
-                                    parseInt(e.target.value) || 0
-                                  )
-                                }
-                                className="border px-2 py-[2px] rounded w-16"
-                                disabled={isDisabled}
-                              />
-                            </div>
-                          );
-                        })}
-                        {/* Show price for this menuKey */}
-                        <span className="ml-2 text-xs text-gray-600 w-1/4">
-                          {(() => {
-                            const rate = companyRates.find(r => r.id === formData.companyRateId);
-                            if(rate?.currency === "TL") {
-                              return `${rate[menuKey]} TL`;
+                    {(["m1", "m2", "m3", "v1", "v2"] as const).map(
+                      (menuKey) => (
+                        <div
+                          key={menuKey}
+                          className="flex items-center justify-start gap-3"
+                        >
+                          <span className="font-semibold w-10">
+                            {menuKey.toUpperCase()}
+                          </span>
+                          {(["full", "half", "infant", "guide"] as const).map(
+                            (type) => {
+                              const isDisabled =
+                                (menuKey === "m1" || menuKey === "v1") &&
+                                (type === "infant" || type === "half");
+                              return (
+                                <div key={type} className="flex items-center gap-1">
+                                  <label
+                                    htmlFor={`${menuKey}-${type}`}
+                                    className="w-12 text-right"
+                                  >
+                                    {type}
+                                  </label>
+                                  <input
+                                    id={`${menuKey}-${type}`}
+                                    type="number"
+                                    min={0}
+                                    value={formData[menuKey][type]}
+                                    onChange={(e) =>
+                                      handleMenuPersonCountChange(
+                                        menuKey,
+                                        type,
+                                        parseInt(e.target.value) || 0
+                                      )
+                                    }
+                                    className="border px-2 py-[2px] rounded w-16"
+                                    disabled={isDisabled}
+                                  />
+                                </div>
+                              );
                             }
-                            if(rate?.currency === "USD") {
-                              return `${rate[menuKey]} $`;
-                            }
-                            if(rate?.currency === "EUR") {
-                              return `${rate[menuKey]} €`;
-                            }
-                           else{
-                            return "-";
-                           }
-                          })()}
-                        </span>
-                      </div>
-                    ))}
+                          )}
+                          <span className="ml-2 text-xs text-gray-600 w-1/4">
+                            {(() => {
+                              const rate = companyRates.find(
+                                (r) => r.id === formData.companyRateId
+                              );
+                              if (!rate) return "-";
+                              if (rate.currency === "TL")
+                                return `${rate[menuKey]} TL`;
+                              if (rate.currency === "USD")
+                                return `${rate[menuKey]} $`;
+                              if (rate.currency === "EUR")
+                                return `${rate[menuKey]} €`;
+                              return "-";
+                            })()}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
 
                   {/* Finansal Bilgiler */}
                   <div className="grid grid-cols-3 gap-4 mt-2">
                     <div className="flex flex-col">
-                      <label htmlFor="moneyReceived" className="font-semibold mb-1">
+                      <label
+                        htmlFor="moneyReceived"
+                        className="font-semibold mb-1"
+                      >
                         Alınan Para
                       </label>
                       <input
@@ -462,7 +605,10 @@ export default function ReservationForm() {
                     </div>
 
                     <div className="flex flex-col">
-                      <label htmlFor="moneyToPayCompany" className="font-semibold mb-1">
+                      <label
+                        htmlFor="moneyToPayCompany"
+                        className="font-semibold mb-1"
+                      >
                         Acenta Para
                       </label>
                       <input
@@ -494,25 +640,26 @@ export default function ReservationForm() {
                     </div>
                   </div>
                 </div>
-
               </div>
               <div className="gap-4 flex justify-center">
-                <button type="submit" className="bg-[#98A1BC] hover:bg-blue-700 text-white font-bold rounded mt-6 px-4 py-2 w-fit self-center">
+                <button
+                  type="submit"
+                  className="bg-[#98A1BC] hover:bg-blue-700 text-white font-bold rounded mt-6 px-4 py-2 w-fit self-center"
+                >
                   Kaydet
                 </button>
-                <button type="button" className="bg-red-400 hover:bg-red-500 text-white font-bold rounded mt-6 px-4 py-2 w-fit self-center" onClick={closeFormHandler}>
+                <button
+                  type="button"
+                  className="bg-red-400 hover:bg-red-500 text-white font-bold rounded mt-6 px-4 py-2 w-fit self-center"
+                  onClick={closeFormHandler}
+                >
                   İptal
                 </button>
               </div>
-
             </form>
-
-
-
-
           </motion.div>
         )}
       </AnimatePresence>
-    </div >
+    </div>
   );
 }

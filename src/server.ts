@@ -208,6 +208,26 @@ app.post("/api/reservations", async (req, res) => {
       },
     });
 
+    // 2. CompanyRate borç/credit güncelle
+    if (paymentType === "Cari") {
+      // Cari ise fullPrice borca ekle
+      await prisma.companyRate.update({
+        where: { id: companyRateId },
+        data: {
+          debt: { increment: fullPrice },
+        },
+      });
+    } else if (paymentType === "Gemide") {
+      // Gemide ise önce borca ekle
+      await prisma.companyRate.update({
+        where: { id: companyRateId },
+        data: {
+          debt: { increment: fullPrice },
+        },
+      });
+      // Tahsilat kasa işlemi ile düşürülecek, burada sadece borca ekleniyor
+    }
+
     return res.status(201).json(newReservation);
   } catch (error) {
     console.error("Create reservation error:", error);
@@ -222,7 +242,12 @@ app.post("/api/reservations", async (req, res) => {
 // PUT /api/reservations/:id
 app.put("/api/reservations/:id", async (req, res) => {
   const { id } = req.params;
+  console.log("==== Reservation PUT request geldi ====");
+  console.log("Gelen ID:", id);
+  console.log("Request body:", req.body); // Bunu da göreceğiz
+
   try {
+    
     const {
       m1 = 0,
       m2 = 0,
@@ -282,11 +307,11 @@ app.put("/api/reservations/:id", async (req, res) => {
         companyRateId,
       },
     });
-
+    
     res.json(updatedReservation);
-  } catch (error) {
-    console.error("Update reservation error:", error);
-    res.status(500).json({ error: "Reservation update failed" });
+  } catch (error: any) {
+    console.error("Update reservation error (DETAY):", error);
+    res.status(500).json({ error: "Reservation update failed", message: error.message });
   }
 });
 
@@ -960,54 +985,165 @@ app.delete('/api/general-incomes:id', async (req, res) => {
 // --- COMPANY RATES ---
 app.get("/api/company-rates", async (req, res) => {
   try {
-    const rates = await prisma.companyRate.findMany();
-    res.json(rates);
+    const rates = await prisma.companyRate.findMany({
+      include: {
+        reservations: true,
+      },
+    });
+
+    // Tipleri inline olarak belirleyelim
+    const enriched = rates.map((rate: any) => {
+      const totalDebt = (rate.reservations ?? []).reduce(
+        (sum: number, r: any) => sum + (r.fullPrice || 0),
+        0
+      );
+
+      const totalCredit = 0;
+
+      // CreatedAt değerleri null değil, Date objesine çevrilmiş olsun diye filtrele
+      const reservationDates = (rate.reservations ?? [])
+        .map((r: any) => r.createdAt)
+        .filter((date: any) => date !== null);
+
+      // Tarih karşılaştırmalı sıralama (yeni tarihler en sona gelsin)
+      reservationDates.sort((a: string | Date, b: string | Date) =>
+        new Date(a).getTime() - new Date(b).getTime()
+      );
+
+      const lastReservation =
+        reservationDates.length > 0
+          ? reservationDates[reservationDates.length - 1]
+          : null;
+
+      return {
+        ...rate,
+        debt: totalDebt,
+        credit: totalCredit,
+        balance: totalCredit - totalDebt,
+        lastReservation,
+      };
+    });
+
+    res.json(enriched);
   } catch (error) {
-    res.status(500).json({ error: "deneme 1-2" });
+    console.error("Get company-rates error:", error);
+    res.status(500).json({ error: "Company rates getirilemedi" });
   }
 });
 
+
+// POST /api/company-rates
 app.post("/api/company-rates", async (req, res) => {
   try {
+    const {
+      companyName,
+      m1,
+      m2,
+      m3,
+      v1,
+      v2,
+      currency,
+      startDate,
+      endDate,
+      description,
+      tax,
+      companyType,
+      credit = 0,
+      debt = 0,
+    } = req.body;
+
+    const balance = credit - debt;
+
     const newRate = await prisma.companyRate.create({
       data: {
-        ...req.body,
-        startDate: new Date(req.body.startDate),
-        endDate: new Date(req.body.endDate),
+        companyName,
+        m1,
+        m2,
+        m3,
+        v1,
+        v2,
+        currency,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        description,
+        tax,
+        companyType,
+        credit,
+        debt,
+        balance,
         createdAt: new Date(),
       },
     });
-    res.json(newRate);
+
+    res.status(201).json(newRate);
   } catch (error) {
-    console.error("Create error:", error);
-    res.status(500).json({ error: "Create failed" });
+    console.error("Create company rate error:", error);
+    res.status(500).json({ error: "CompanyRate oluşturulamadı" });
   }
 });
 
+// PUT /api/company-rates/:id
 app.put("/api/company-rates/:id", async (req, res) => {
-  const { id } = req.params;
   try {
+    const { id } = req.params;
+    const {
+      companyName,
+      m1,
+      m2,
+      m3,
+      v1,
+      v2,
+      currency,
+      startDate,
+      endDate,
+      description,
+      tax,
+      companyType,
+      credit = 0,
+      debt = 0,
+    } = req.body;
+
+    const balance = credit - debt;
+
     const updatedRate = await prisma.companyRate.update({
       where: { id },
       data: {
-        ...req.body,
-        startDate: new Date(req.body.startDate),
-        endDate: new Date(req.body.endDate),
-      }
+        companyName,
+        m1,
+        m2,
+        m3,
+        v1,
+        v2,
+        currency,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        description,
+        tax,
+        companyType,
+        credit,
+        debt,
+        balance,
+      },
     });
+
     res.json(updatedRate);
   } catch (error) {
-    res.status(500).json({ error: "Update failed" });
+    console.error("Update company rate error:", error);
+    res.status(500).json({ error: "CompanyRate güncellenemedi" });
   }
 });
+
 
 app.delete("/api/company-rates/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.companyRate.delete({ where: { id } });
-    res.json({ success: true });
+    await prisma.companyRate.delete({
+      where: { id },
+    });
+    res.status(204).end(); // No Content
   } catch (error) {
-    res.status(500).json({ error: "Delete failed" });
+    console.error("Delete company rate error:", error);
+    res.status(500).json({ error: "Şirket oranı silinemedi." });
   }
 });
 
@@ -1212,7 +1348,7 @@ app.delete('/api/incomes/:id', async (req, res) => {
     await prisma.income.delete({ where: { id } });
   } catch (error) {
     console.error("DELETE error", error);
-    res.status(500).json({ error: "Gelir tipi silinemedi"});
+    res.status(500).json({ error: "Gelir tipi silinemedi" });
   }
 });
 

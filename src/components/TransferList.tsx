@@ -8,7 +8,7 @@ const TransferList = () => {
 
   // Filter by client name
   const filteredByClient = filterByClient ?
-    reservations.filter(reservation => reservation.companyRate?.company.toLowerCase().includes(filterByClient.toLowerCase())) : reservations;
+    reservations.filter(reservation => reservation.companyRate?.companyName.toLowerCase().includes(filterByClient.toLowerCase())) : reservations;
 
   const filterDate = filteredByDate || new Date().toISOString().slice(0, 10);
 
@@ -64,7 +64,7 @@ const TransferList = () => {
               </tr>
             ) : (
               filteredReservations.map((reservation) => {
-                const company = reservation.companyRate?.company?.toLowerCase() || "";
+                const company = reservation.companyRate?.companyName?.toLowerCase() || "";
                 const filterMatch = company.includes(filterByClient.toLowerCase());
 
                 return filterMatch ? (
@@ -78,7 +78,7 @@ const TransferList = () => {
                     <td className="px-4 py-2">{reservation.returnLocation || "-"}</td>
                     <td className="px-4 py-2">{reservation.returnTransfer || "-"}</td>
                     <td className="px-4 py-2">{reservation.totalPerson || "-"}</td>
-                    <td className="px-4 py-2">{reservation.companyRate?.company || "-"}</td>
+                    <td className="px-4 py-2">{reservation.companyRate?.companyName || "-"}</td>
                     <td
                       className="px-4 py-2 max-w-xs truncate"
                       title={reservation.description || "-"}
