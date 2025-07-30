@@ -23,6 +23,7 @@ export default function ReservationForm() {
     guide: 0,
   };
 
+  // Burada companyDebtId yokken hata veriyordu, undefined yaparak çözüyoruz.
   const [formData, setFormData] = useState<ReservationInput>({
     date: new Date().toISOString().slice(0, 16),
     room: undefined,
@@ -32,6 +33,7 @@ export default function ReservationForm() {
     transferNote: undefined,
     ship: "",
     companyRateId: "",
+    companyDebtId: undefined,  // burayı böyle yapmalısın
     resTakerId: "",
     authorizedId: "",
     arrivalTransfer: "",
@@ -51,6 +53,24 @@ export default function ReservationForm() {
     moneyToPayCompany: 0,
     fullPrice: 0,
   });
+
+  useEffect(() => {
+    if (formData.companyRateId) {
+      fetch(`http://localhost:3001/api/company-debts/${formData.companyRateId}`)
+        .then((res) => res.json())
+        .then((debt) => {
+          if (debt?.id) {
+            setFormData((prev) => ({ ...prev, companyDebtId: debt.id }));
+          } else {
+            setFormData((prev) => ({ ...prev, companyDebtId: undefined }));
+          }
+        })
+        .catch(console.error);
+    } else {
+      // Eğer companyRateId boş ise companyDebtId de sıfırlansın
+      setFormData((prev) => ({ ...prev, companyDebtId: undefined }));
+    }
+  }, [formData.companyRateId]);
 
   const { clients, fetchClients } = useClientStore();
   const { employees, fetchEmployees } = useEmployeeStore();
@@ -157,81 +177,86 @@ export default function ReservationForm() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    // tour dizisi oluşturuluyor (örneğin ["2-M1", "3-M2"])
-    const tour: string[] = [];
-    (["m1", "m2", "m3", "v1", "v2"] as const).forEach((menuKey) => {
-      const totalCount =
-        formData[menuKey].full +
-        formData[menuKey].half +
-        formData[menuKey].infant +
-        formData[menuKey].guide;
-      if (totalCount > 0) tour.push(`${totalCount}-${menuKey.toUpperCase()}`);
-    });
+  const tour: string[] = [];
+  let totalFull = 0;
+  let totalHalf = 0;
+  let totalInfant = 0;
+  let totalGuide = 0;
 
-    // toplam kişi sayısı (totalPerson)
-    const totalPerson =
-      (["m1", "m2", "m3", "v1", "v2"] as const).reduce(
-        (sum, key) =>
-          sum +
-          formData[key].full +
-          formData[key].half +
-          formData[key].infant +
-          formData[key].guide,
-        0
-      );
+  (["m1", "m2", "m3", "v1", "v2"] as const).forEach((menuKey) => {
+    const count = formData[menuKey];
+    const totalCount = count.full + count.half + count.infant + count.guide;
 
-    const selectedArrival = transferPoints.find(
-      (p) => p.id === formData.arrivalTransfer
-    );
-    const selectedReturn = transferPoints.find(
-      (p) => p.id === formData.returnTransfer
-    );
+    totalFull += count.full;
+    totalHalf += count.half;
+    totalInfant += count.infant;
+    totalGuide += count.guide;
 
-    const payload: ReservationInput = {
-      ...formData,
-      tour,
-      fullPrice: formData.fullPrice,
-      arrivalTransfer: selectedArrival?.transferPointName || undefined,
-      returnTransfer: selectedReturn?.transferPointName || undefined,
-      arrivalLocation: selectedArrival?.location?.locationName || undefined,
-      returnLocation: selectedReturn?.location?.locationName || undefined,
-    };
+    if (totalCount > 0) tour.push(`${totalCount}-${menuKey.toUpperCase()}`);
+  });
 
-    await createReservation(payload);
+  const totalPerson = totalFull + totalHalf + totalInfant + totalGuide;
 
-    // formu resetle
-    setFormData({
-      date: new Date().toISOString().slice(0, 16),
-      room: undefined,
-      voucherNo: undefined,
-      nationality: undefined,
-      description: undefined,
-      transferNote: undefined,
-      ship: "",
-      companyRateId: "",
-      resTakerId: "",
-      authorizedId: "",
-      arrivalTransfer: "",
-      returnTransfer: "",
-      arrivalLocation: "",
-      returnLocation: "",
-      saloonId: "",
-      resTableId: "",
-      m1: { ...emptyMenuPersonCount },
-      m2: { ...emptyMenuPersonCount },
-      m3: { ...emptyMenuPersonCount },
-      v1: { ...emptyMenuPersonCount },
-      v2: { ...emptyMenuPersonCount },
-      tour: [],
-      paymentType: "Gemide",
-      moneyReceived: 0,
-      moneyToPayCompany: 0,
-      fullPrice: 0,
-    });
-    closeFormHandler();
+  const selectedArrival = transferPoints.find(p => p.id === formData.arrivalTransfer);
+  const selectedReturn = transferPoints.find(p => p.id === formData.returnTransfer);
+
+  const payload = {
+    ...formData,
+    tour,
+    arrivalTransfer: selectedArrival?.transferPointName || undefined,
+    returnTransfer: selectedReturn?.transferPointName || undefined,
+    arrivalLocation: selectedArrival?.location?.locationName || undefined,
+    returnLocation: selectedReturn?.location?.locationName || undefined,
+    m1Count: formData.m1.full,
+    m2Count: formData.m2.full,
+    m3Count: formData.m3.full,
+    v1Count: formData.v1.full,
+    v2Count: formData.v2.full,
+    full: totalFull,
+    half: totalHalf,
+    infant: totalInfant,
+    guide: totalGuide,
+    totalPerson,
   };
+
+  await createReservation(payload);
+
+  // Reset form:
+  setFormData({
+    date: new Date().toISOString().slice(0, 16),
+    room: undefined,
+    voucherNo: undefined,
+    nationality: undefined,
+    description: undefined,
+    transferNote: undefined,
+    ship: "",
+    companyRateId: "",
+    companyDebtId: undefined,
+    resTakerId: "",
+    authorizedId: "",
+    arrivalTransfer: "",
+    returnTransfer: "",
+    arrivalLocation: "",
+    returnLocation: "",
+    saloonId: "",
+    resTableId: "",
+    m1: { ...emptyMenuPersonCount },
+    m2: { ...emptyMenuPersonCount },
+    m3: { ...emptyMenuPersonCount },
+    v1: { ...emptyMenuPersonCount },
+    v2: { ...emptyMenuPersonCount },
+    tour: [],
+    paymentType: "Gemide",
+    moneyReceived: 0,
+    moneyToPayCompany: 0,
+    fullPrice: 0,
+  });
+
+  closeFormHandler();
+  console.log("Gönderilen payload:", payload); // <-- formData değil, payload loglanmalı
+};
 
   return (
     <div className="relative flex flex-col items-center p-4 bg-gray-50 rounded-lg shadow-md">
@@ -514,5 +539,8 @@ export default function ReservationForm() {
         )}
       </AnimatePresence>
     </div >
-  );
+  )
 }
+
+  
+  

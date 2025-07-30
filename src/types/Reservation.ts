@@ -91,6 +91,7 @@ export interface ReservationInput {
   ship: string;
 
   companyRateId?: string;
+  companyDebtId?: string;
 
   resTakerId: string;
   authorizedId: string;

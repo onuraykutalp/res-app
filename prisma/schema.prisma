@@ -32,6 +32,8 @@ model Employee {
   updatedSuppliers       Supplier[]    @relation("UpdatedSuppliers")
   takenReservations      Reservation[] @relation("ResTaker")
   authorizedReservations Reservation[] @relation("Authorized")
+
+  registers Register[] @relation("CreatedRegisters") // Kasa kayıtlarını oluşturan personel
 }
 
 // ======================= CLIENT =======================
@@ -49,6 +51,8 @@ model Client {
   lastUpdate   DateTime?
   whoUpdatedId String?
   whoUpdated   Employee? @relation("UpdatedClients", fields: [whoUpdatedId], references: [id])
+
+  registers Register[] // Kasa kayıtlarıyla ilişki
 }
 
 // ======================= SUPPLIER =======================
@@ -137,9 +141,9 @@ model GeneralIncome {
 }
 
 model Income {
-  id   String   @id @default(uuid())
-  name String
-  tax  Float
+  id         String   @id @default(uuid())
+  name       String
+  tax        Float
   ship       Boolean
   accountant Boolean
   createdAt  DateTime @default(now())
@@ -253,32 +257,32 @@ enum PaymentType {
 }
 
 model Reservation {
-  id              String   @id @default(uuid())
-  reservationNo   Int      @unique
-  date            DateTime
-  room            String?
-  voucherNo       String?
-  nationality     String?
-  description     String?
-  transferNote    String?
-  ship            String?
-  m1              Int      @default(0)
-  m2              Int      @default(0)
-  m3              Int      @default(0)
-  v1              Int      @default(0)
-  v2              Int      @default(0)
-  full            Int?
-  half            Int?
-  infant          Int?
-  guide           Int?
-  totalPerson     Int?
-  fullPrice       Float    @default(0)
-  tour            String?
+  id            String   @id @default(uuid())
+  reservationNo Int      @unique
+  date          DateTime
+  room          String?
+  voucherNo     String?
+  nationality   String?
+  description   String?
+  transferNote  String?
+  ship          String?
+  m1            Int      @default(0)
+  m2            Int      @default(0)
+  m3            Int      @default(0)
+  v1            Int      @default(0)
+  v2            Int      @default(0)
+  full          Int?
+  half          Int?
+  infant        Int?
+  guide         Int?
+  totalPerson   Int?
+  fullPrice     Float    @default(0)
+  tour          String?
 
-  moneyReceived     Float   @default(0)
-  moneyToPayCompany Float   @default(0)
+  moneyReceived     Float @default(0)
+  moneyToPayCompany Float @default(0)
 
-  paymentType  PaymentType
+  paymentType PaymentType
 
   companyRateId String
   companyRate   CompanyRate @relation(fields: [companyRateId], references: [id])
@@ -289,41 +293,104 @@ model Reservation {
   authorizedId String
   authorized   Employee @relation("Authorized", fields: [authorizedId], references: [id])
 
-  saloonId String
-  saloon   Saloon @relation(fields: [saloonId], references: [id])
+  saloonId String?
+  saloon   Saloon? @relation(fields: [saloonId], references: [id])
 
-  resTableId String
-  resTable   ResTable @relation(fields: [resTableId], references: [id])
+  resTableId String?
+  resTable   ResTable? @relation(fields: [resTableId], references: [id])
 
-  // Artık sadece bu string alanları kullanıyoruz:
-  arrivalTransfer  String?
-  returnTransfer   String?
+  arrivalTransfer String?
+  returnTransfer  String?
 
-  arrivalLocation  String?
-  returnLocation   String?
+  arrivalLocation String?
+  returnLocation  String?
 
-  transfers Transfer[] // Transfer modeli ile bağlantı
+  companyDebtId String?
+  companyDebt   CompanyDebt? @relation("CompanyDebtReservations", fields: [companyDebtId], references: [id])
 
-  createdAt DateTime @default(now())
+  transfers Transfer[] // One-to-many ilişki
+
+  createdAt DateTime   @default(now())
+  registers Register[] // Kasa kayıtlarıyla ilişki
 }
-
 
 // ======================OUTCOMES==========================
 
 model OutcomeGroup {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
-  outcomes  Outcome[] // Relation to Outcome
+  outcomes Outcome[] // Relation to Outcome
 }
 
 model Outcome {
-  id          String        @id @default(uuid())
-  groupId     String
-  group       OutcomeGroup  @relation(fields: [groupId], references: [id])
-  name        String
-  ship        Boolean
-  accountant  Boolean
-  createdAt   DateTime      @default(now())
+  id         String       @id @default(uuid())
+  groupId    String
+  group      OutcomeGroup @relation(fields: [groupId], references: [id])
+  name       String
+  ship       Boolean
+  accountant Boolean
+  createdAt  DateTime     @default(now())
+}
+
+model CompanyDebt {
+  id            String   @id
+  companyRateId String?  @unique // nullable yaptık
+  name          String
+  companyType   String
+  currency      String
+  tax           Float    @default(0)
+  debt          Float    @default(0)
+  credit        Float    @default(0)
+  balance       Float    @default(0)
+  createdAt     DateTime @default(now())
+
+  reservations Reservation[] @relation("CompanyDebtReservations")
+
+  registers Register[] // Kasa kayıtlarıyla ilişki
+
+  @@map("company_debts")
+}
+
+enum Currency {
+  TRY
+  EUR
+  USD
+  GBP
+}
+
+enum AccountType {
+  GEMI_KASA_TRY
+  GEMI_KASA_EUR
+  GEMI_KASA_USD
+  GEMI_KASA_GBP
+  ISBANK_POS_TRY
+  ISBANK_POS_EUR
+  ISBANK_POS_USD
+}
+
+model Register {
+  id            String       @id @default(uuid())
+  ship          String
+  reservationId String?
+  reservation   Reservation? @relation(fields: [reservationId], references: [id])
+
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id])
+
+  companyDebtId String?
+  companyDebt   CompanyDebt? @relation(fields: [companyDebtId], references: [id])
+
+  groupName   String
+  accountType AccountType
+  entry       Float       @default(0)
+  out         Float       @default(0)
+  currency    Currency
+  description String?
+  receiptDate DateTime
+  createdAt   DateTime    @default(now())
+
+  createdById String
+  createdBy   Employee @relation("CreatedRegisters", fields: [createdById], references: [id])
 }

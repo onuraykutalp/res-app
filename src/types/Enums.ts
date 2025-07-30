@@ -1,0 +1,16 @@
+export enum Currency {
+  TRY = "TRY",
+  EUR = "EUR",
+  USD = "USD",
+  GBP = "GBP",
+}
+
+export enum AccountType {
+  GEMI_KASA_TRY = "GEMI_KASA_TRY",
+  GEMI_KASA_EUR = "GEMI_KASA_EUR",
+  GEMI_KASA_USD = "GEMI_KASA_USD",
+  GEMI_KASA_GBP = "GEMI_KASA_GBP",
+  ISBANK_POS_TRY = "ISBANK_POS_TRY",
+  ISBANK_POS_EUR = "ISBANK_POS_EUR",
+  ISBANK_POS_USD = "ISBANK_POS_USD",
+}
