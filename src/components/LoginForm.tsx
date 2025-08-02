@@ -17,7 +17,7 @@ export const LoginForm = () => {
     setLoading(true);
     try {
       await login(username, password);
-      navigate('/app');
+      navigate('/app/dashboard');
     } catch {
       // Hata zaten error state’te var
     } finally {

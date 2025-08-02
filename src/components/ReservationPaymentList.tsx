@@ -2,7 +2,7 @@ import { useReservationStore } from "../store/useReservationStore";
 import { useEffect } from "react";
 import { Reservation } from "../types/Reservation";
 import { useState } from "react";
-import RegisterForm from "./RegisterForm"; // Bir sonraki adımda yazacağız
+import { RegisterForm } from "./RegisterForm";
 
 export default function ReservationPaymentList() {
   const { reservations, fetchReservations } = useReservationStore();
@@ -39,8 +39,8 @@ export default function ReservationPaymentList() {
       {selectedReservation && (
         <RegisterForm
           mode="reservation"
-          reservation={selectedReservation}
           onClose={() => setSelectedReservation(null)}
+          reservation={selectedReservation}
         />
       )}
     </div>

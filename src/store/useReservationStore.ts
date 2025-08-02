@@ -35,6 +35,9 @@ interface ReservationStore {
   createReservation: (data: ReservationInput) => Promise<void>;
   updateReservation: (id: string, data: ReservationInput) => Promise<void>;
   deleteReservation: (id: string) => Promise<void>;
+  editReservation: (id: string, data: ReservationInput) => Promise<void>;
+  setEditId: (id: string | null) => void;
+  editId: string | null;
 }
 
 export const useReservationStore = create<ReservationStore>((set) => ({
@@ -105,4 +108,30 @@ export const useReservationStore = create<ReservationStore>((set) => ({
       console.error("Delete error:", error);
     }
   },
+  editId: null,
+
+  editReservation: async (id: string, data: ReservationInput) => {
+    try {
+      set({ editId: id });
+      const transformedData = transformReservationInput(data);
+      const res = await fetch(`http://localhost:3001/api/reservations/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(transformedData),
+      });
+      if (!res.ok) throw new Error("Edit failed");
+      const updatedReservation: Reservation = await res.json();
+      set((state) => ({
+        reservations: state.reservations.map((r) =>
+          r.id === id ? updatedReservation : r
+        ),
+      }));
+    } catch (error) {
+      console.error("Edit error:", error);
+    }
+  },
+  setEditId: (id: string | null) => {
+    set({ editId: id });
+  },
+ 
 }));

@@ -1,64 +1,53 @@
 import { create } from "zustand";
-import { Register } from "../types/Register"; // type'ı birazdan birlikte tanımlarız
+import { Register, RegisterInput } from "../types/Register";
+import { AccountType, Currency } from "../types/Enums";
 
 interface RegisterStore {
   registers: Register[];
-  editingRegister: Register | null;
-
+  loading: boolean;
   fetchRegisters: () => Promise<void>;
-  createRegister: (data: Omit<Register, "id" | "createdAt">) => Promise<void>;
-  updateRegister: (id: string, data: Partial<Register>) => Promise<void>;
-  deleteRegister: (id: string) => Promise<void>;
-
-  setEditingRegister: (register: Register) => void;
-  clearEditingRegister: () => void;
+  createRegister: (data: RegisterInput) => Promise<void>;
+  
 }
 
 export const useRegisterStore = create<RegisterStore>((set) => ({
   registers: [],
-  editingRegister: null,
+  loading: false,
 
   fetchRegisters: async () => {
-    const res = await fetch("/register");
-    const data = await res.json();
-    set({ registers: data });
-  },
-
-  createRegister: async (data) => {
-    const res = await fetch("/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
-      await set((state) => ({
-        registers: [...state.registers], // isteğe bağlı, fetch tekrar çağırılabilir
-      }));
+    set({ loading: true });
+    try {
+      const res = await fetch("http://localhost:3001/api/register");
+      const data = await res.json();
+      set({ registers: data });
+    } catch (error) {
+      console.error("Failed to fetch registers", error);
+    } finally {
+      set({ loading: false });
     }
   },
 
-  updateRegister: async (id, data) => {
-    const res = await fetch(`/register/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
-      await set((state) => ({
-        editingRegister: null,
-      }));
-    }
-  },
+  createRegister: async (data: RegisterInput) => {
+    try {
+      const res = await fetch("http://localhost:3001/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-  deleteRegister: async (id) => {
-    const res = await fetch(`/register/${id}`, { method: "DELETE" });
-    if (res.ok) {
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData?.error || "Register create failed");
+      }
+
+      const newRegister: Register = await res.json();
       set((state) => ({
-        registers: state.registers.filter((r) => r.id !== id),
+        registers: [...state.registers, newRegister],
       }));
+    } catch (error) {
+      console.error("Failed to create register:", error);
     }
   },
-
-  setEditingRegister: (register) => set({ editingRegister: register }),
-  clearEditingRegister: () => set({ editingRegister: null }),
 }));

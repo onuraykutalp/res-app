@@ -14,3 +14,4 @@ export enum AccountType {
   ISBANK_POS_EUR = "ISBANK_POS_EUR",
   ISBANK_POS_USD = "ISBANK_POS_USD",
 }
+

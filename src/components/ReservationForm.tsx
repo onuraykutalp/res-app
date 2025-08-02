@@ -26,10 +26,10 @@ export default function ReservationForm() {
   // Burada companyDebtId yokken hata veriyordu, undefined yaparak çözüyoruz.
   const [formData, setFormData] = useState<ReservationInput>({
     date: new Date().toISOString().slice(0, 16),
-    room: undefined,
-    voucherNo: undefined,
-    nationality: undefined,
-    description: undefined,
+    room: "",
+    voucherNo: "",
+    nationality: "",
+    description: "",
     transferNote: undefined,
     ship: "",
     companyRateId: "",
@@ -205,6 +205,8 @@ export default function ReservationForm() {
   const payload = {
     ...formData,
     tour,
+    description: formData.description || "",
+    nationality: formData.nationality || "",
     arrivalTransfer: selectedArrival?.transferPointName || undefined,
     returnTransfer: selectedReturn?.transferPointName || undefined,
     arrivalLocation: selectedArrival?.location?.locationName || undefined,
@@ -226,14 +228,14 @@ export default function ReservationForm() {
   // Reset form:
   setFormData({
     date: new Date().toISOString().slice(0, 16),
-    room: undefined,
-    voucherNo: undefined,
-    nationality: undefined,
-    description: undefined,
+    room: "",
+    voucherNo: "",
+    nationality: "",
+    description: "",
     transferNote: undefined,
     ship: "",
     companyRateId: "",
-    companyDebtId: undefined,
+    companyDebtId: "",
     resTakerId: "",
     authorizedId: "",
     arrivalTransfer: "",
@@ -328,6 +330,8 @@ export default function ReservationForm() {
                           <option value="Komisyonsuz">Komisyonsuz</option>
                         </select>
                       </div>
+
+                      
                       <div className="flex items-center gap-2">
                         <label htmlFor="room" className="w-32">Oda</label>
                         <input type="text" name="room" value={formData.room || ""} onChange={handleChange} className="border px-3 py-2 rounded flex-1" />

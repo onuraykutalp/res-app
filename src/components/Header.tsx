@@ -1,5 +1,12 @@
 import path from 'path';
 import { Link, useLocation } from 'react-router-dom';
+import { GiShipWheel } from "react-icons/gi";
+import { FaCashRegister } from "react-icons/fa6";
+import { FaPeopleRoof } from "react-icons/fa6";
+import { BsPersonWorkspace } from "react-icons/bs";
+import { FaBus } from "react-icons/fa";
+import { GiSaloonDoors } from "react-icons/gi";
+
 
 const pages = [
   { path: '/app/dashboard', label: 'Dashboard' },
@@ -11,13 +18,16 @@ const pages = [
   { path: '/app/clients', label: 'Müşteriler' },
   { path: '/app/saloons', label: 'Salonlar' },
   { path: '/app/tables', label: 'Masa Düzeni' },
-  { path: '/app/transfer-locations', label: 'Bölgeler' },
+  { path: '/app/transfer-locations', label: 'Transfer Bölgeleri' },
   { path: '/app/company-rates', label: 'Şirket Fiyatları' },
   { path: '/app/general-income', label: 'Genel Fiyatlar' },
   { path: '/app/table-layout', label: 'Masa Düzeni' },
   { path: '/app/incomes', label: 'Gelir Tanımları' },
   { path: '/app/outcome-groups', label: 'Gider Grupları' },
-  { path: '/app/outcomes', label: 'Gider Tanımları' }
+  { path: '/app/outcomes', label: 'Gider Tanımları' },
+  { path: '/app/register', label: 'Kasa' },
+  { path: '/app/company-debts', label: 'Müşteriler Cari' },
+  { path: '/app/transfer-points', label: 'Transfer Noktaları' },
 ];
 
 const shipMenuPaths = [
@@ -25,6 +35,33 @@ const shipMenuPaths = [
   '/app/transfer-list',
   '/app/welcome-list',
   '/app/table-layout',
+];
+
+const registerPaths = [
+  '/app/register',
+  '/app/incomes',
+  '/app/outcomes',
+  '/app/outcome-groups',
+];
+
+const clientPaths = [
+  '/app/company-rates',
+  '/app/company-debts',
+];
+
+const employeePaths = [
+  '/app/employees',
+  '/app/employee-groups',
+];
+
+const transferPaths = [
+  '/app/transfer-locations',
+  '/app/transfer-points',
+];
+
+const saloonsPaths = [
+  '/app/saloons',
+  '/app/tables',
 ];
 
 const definitionGroups: { [title: string]: string[] } = {
@@ -50,8 +87,8 @@ const Header = () => {
           {/* ===== Gemi Menüsü ===== */}
           <div className="relative group">
 
-            <button className="text-gray-600 hover:text-black font-medium px-3 py-2">
-              Gemi
+            <button className="text-gray-600 hover:text-black font-medium px-3 py-2 flex items-center gap-2">
+             <GiShipWheel /> Gemi
             </button>
             <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg 
                             opacity-0 invisible group-hover:visible group-hover:opacity-100 
@@ -70,31 +107,125 @@ const Header = () => {
               </div>
             </div>
           </div>
+          
 
           {/* ===== Muhasebe Menüsü ===== */}
           <div className="relative group">
-            <button className="text-gray-600 hover:text-black font-medium px-3 py-2">
-              Muhasebe
+            <button className="text-gray-600 hover:text-black font-medium px-3 py-2 flex items-center gap-2">
+              <FaCashRegister /> Muhasebe
             </button>
             <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg 
                             opacity-0 invisible group-hover:visible group-hover:opacity-100 
                             transition-all duration-200 z-20">
               <div className="py-1 text-sm text-black">
-                <span className="block px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Gelirler
-                </span>
-                <span className="block px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Giderler
-                </span>
-                <span className="block px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Raporlar
-                </span>
+                {registerPaths.map((path) => (
+                  <Link
+                    key={path}
+                    to={path}
+                    className={`block px-4 py-2 hover:bg-gray-100 ${location.pathname === path ? 'text-blue-600' : ''
+                      }`}
+                  >
+                    {getPageLabel(path)}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+                
+          <div className="relative group">
+
+            <button className="text-gray-600 hover:text-black font-medium px-3 py-2 flex items-center gap-2">
+             <FaPeopleRoof /> Müşteriler
+            </button>
+            <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg 
+                            opacity-0 invisible group-hover:visible group-hover:opacity-100 
+                            transition-all duration-200 z-20">
+              <div className="py-1 text-sm text-[#fffff]">
+                {clientPaths.map((path) => (
+                  <Link
+                    key={path}
+                    to={path}
+                    className={`block px-4 py-2 hover:bg-gray-100 ${location.pathname === path ? 'text-[#fffff]' : ''
+                      }`}
+                  >
+                    {getPageLabel(path)}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="relative group">
+
+            <button className="text-gray-600 hover:text-black font-medium px-3 py-2 flex items-center gap-2">
+             <BsPersonWorkspace /> Personel
+            </button>
+            <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg 
+                            opacity-0 invisible group-hover:visible group-hover:opacity-100 
+                            transition-all duration-200 z-20">
+              <div className="py-1 text-sm text-[#fffff]">
+                {employeePaths.map((path) => (
+                  <Link
+                    key={path}
+                    to={path}
+                    className={`block px-4 py-2 hover:bg-gray-100 ${location.pathname === path ? 'text-[#fffff]' : ''
+                      }`}
+                  >
+                    {getPageLabel(path)}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="relative group">
+
+            <button className="text-gray-600 hover:text-black font-medium px-3 py-2 flex items-center gap-2">
+             <FaBus /> Transfer
+            </button>
+            <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg 
+                            opacity-0 invisible group-hover:visible group-hover:opacity-100 
+                            transition-all duration-200 z-20">
+              <div className="py-1 text-sm text-[#fffff]">
+                {transferPaths.map((path) => (
+                  <Link
+                    key={path}
+                    to={path}
+                    className={`block px-4 py-2 hover:bg-gray-100 ${location.pathname === path ? 'text-[#fffff]' : ''
+                      }`}
+                  >
+                    {getPageLabel(path)}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="relative group">
+
+            <button className="text-gray-600 hover:text-black font-medium px-3 py-2 flex items-center gap-2">
+             <GiSaloonDoors /> Salonlar
+            </button>
+            <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg 
+                            opacity-0 invisible group-hover:visible group-hover:opacity-100 
+                            transition-all duration-200 z-20">
+              <div className="py-1 text-sm text-[#fffff]">
+                {saloonsPaths.map((path) => (
+                  <Link
+                    key={path}
+                    to={path}
+                    className={`block px-4 py-2 hover:bg-gray-100 ${location.pathname === path ? 'text-[#fffff]' : ''
+                      }`}
+                  >
+                    {getPageLabel(path)}
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
 
           {/* ===== Tanımlar Menüsü ===== */}
-          <div className="relative group">
+          {/*<div className="relative group">
             <button className="text-gray-600 hover:text-black font-medium px-3 py-2">
               Tanımlar
             </button>
@@ -123,10 +254,13 @@ const Header = () => {
             </div>
           </div>
 
+  );
+};
+          */}
         </div>
       </div>
     </header>
   );
-};
+}
 
 export default Header;

@@ -372,7 +372,7 @@ enum AccountType {
 
 model Register {
   id            String       @id @default(uuid())
-  ship          String
+  ship          String?
   reservationId String?
   reservation   Reservation? @relation(fields: [reservationId], references: [id])
 
@@ -382,7 +382,7 @@ model Register {
   companyDebtId String?
   companyDebt   CompanyDebt? @relation(fields: [companyDebtId], references: [id])
 
-  groupName   String
+  groupName   String?
   accountType AccountType
   entry       Float       @default(0)
   out         Float       @default(0)

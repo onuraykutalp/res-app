@@ -59,31 +59,32 @@ app.get("/api/reservations", async (req, res) => {
 app.post("/api/reservations", async (req, res) => {
   try {
     const {
-  date,
-  m1Count,
-  m2Count,
-  m3Count,
-  v1Count,
-  v2Count,
-  full,
-  half,
-  infant,
-  guide,
-  totalPerson,
-  arrivalTransfer,
-  returnTransfer,
-  tour,
-  companyRateId,
-  paymentType,
-  resTableId,
-  saloonId,
-  resTakerId,
-  authorizedId,
-
-  // Bunları EKLE:
-  arrivalLocation,
-  returnLocation,
-} = req.body;
+      date,
+      m1Count,
+      m2Count,
+      m3Count,
+      v1Count,
+      v2Count,
+      full,
+      half,
+      infant,
+      guide,
+      totalPerson,
+      arrivalTransfer,
+      returnTransfer,
+      tour,
+      companyRateId,
+      paymentType,
+      resTableId,
+      saloonId,
+      resTakerId,
+      authorizedId,
+      description,
+      nationality,
+      // Bunları EKLE:
+      arrivalLocation,
+      returnLocation,
+    } = req.body;
 
     // Zorunlu alanlar kontrolü
     if (!date || !companyRateId || !resTakerId || !authorizedId || !paymentType) {
@@ -122,45 +123,47 @@ app.post("/api/reservations", async (req, res) => {
 
     // Rezervasyon oluştur
     const newReservation = await prisma.reservation.create({
-  data: {
-    reservationNo,
-    date: new Date(date), // date: ISO string ya da Date objesi
-    m1: m1Count ?? 0,
-    m2: m2Count ?? 0,
-    m3: m3Count ?? 0,
-    v1: v1Count ?? 0,
-    v2: v2Count ?? 0,
-    full: full ?? 0,
-    half: half ?? 0,
-    infant: infant ?? 0,
-    guide: guide ?? 0,
-    totalPerson: totalPerson ?? 0,
-    fullPrice,
-    tour: Array.isArray(tour) ? tour.join(",") : "",
-    moneyReceived: 0,
-    moneyToPayCompany: 0,
-    paymentType,
+      data: {
+        reservationNo,
+        date: new Date(date), // date: ISO string ya da Date objesi
+        m1: m1Count ?? 0,
+        m2: m2Count ?? 0,
+        m3: m3Count ?? 0,
+        v1: v1Count ?? 0,
+        v2: v2Count ?? 0,
+        full: full ?? 0,
+        half: half ?? 0,
+        infant: infant ?? 0,
+        guide: guide ?? 0,
+        totalPerson: totalPerson ?? 0,
+        fullPrice,
+        tour: Array.isArray(tour) ? tour.join(",") : "",
+        moneyReceived: 0,
+        moneyToPayCompany: 0,
+        paymentType,
+        description,
+        nationality,
 
-    // Foreign key bağlantıları (zorunlu)
-    companyRate: { connect: { id: companyRateId } },
-    resTaker:    { connect: { id: resTakerId } },
-    authorized:  { connect: { id: authorizedId } },
+        // Foreign key bağlantıları (zorunlu)
+        companyRate: { connect: { id: companyRateId } },
+        resTaker: { connect: { id: resTakerId } },
+        authorized: { connect: { id: authorizedId } },
 
-    // Nullable alanlar (undefined gönderilebilir)
-    saloon:      saloonId ? { connect: { id: saloonId } } : undefined,
-    resTable:    resTableId ? { connect: { id: resTableId } } : undefined,
+        // Nullable alanlar (undefined gönderilebilir)
+        saloon: saloonId ? { connect: { id: saloonId } } : undefined,
+        resTable: resTableId ? { connect: { id: resTableId } } : undefined,
 
-    arrivalTransfer: arrivalTransfer || null,
-    returnTransfer: returnTransfer || null,
-    arrivalLocation: arrivalLocation || null,
-    returnLocation: returnLocation || null,
+        arrivalTransfer: arrivalTransfer || null,
+        returnTransfer: returnTransfer || null,
+        arrivalLocation: arrivalLocation || null,
+        returnLocation: returnLocation || null,
 
-    // Eğer backendde companyDebtId set edilecekse — şu an edilmiyor:
-    // companyDebt: companyDebtId ? { connect: { id: companyDebtId } } : undefined,
+        // Eğer backendde companyDebtId set edilecekse — şu an edilmiyor:
+        // companyDebt: companyDebtId ? { connect: { id: companyDebtId } } : undefined,
 
-    createdAt: new Date(),
-  }
-});
+        createdAt: new Date(),
+      }
+    });
 
 
 
@@ -216,74 +219,103 @@ app.get("/api/company-debts/:companyRateId", async (req, res) => {
 
 // PUT /api/reservations/:id
 app.put("/api/reservations/:id", async (req, res) => {
-  const { id } = req.params;
   try {
+    const { id } = req.params;
+
     const {
-      m1 = 0,
-      m2 = 0,
-      m3 = 0,
-      v1 = 0,
-      v2 = 0,
-      full = 0,
-      half = 0,
-      infant = 0,
-      guide = 0,
+      date,
+      m1Count,
+      m2Count,
+      m3Count,
+      v1Count,
+      v2Count,
+      full,
+      half,
+      infant,
+      guide,
+      totalPerson,
       arrivalTransfer,
       returnTransfer,
+      tour,
       companyRateId,
-      ...rest
+      paymentType,
+      resTableId,
+      saloonId,
+      resTakerId,
+      authorizedId,
+      description,
+      nationality,
+      arrivalLocation,
+      returnLocation,
     } = req.body;
 
-    const totalPerson = full + half + infant + guide;
+    if (!date || !companyRateId || !resTakerId || !authorizedId || !paymentType) {
+      return res.status(400).json({ error: "Zorunlu alanlar eksik" });
+    }
 
-    const menuMap: Record<string, string> = {
-      m1: "M1",
-      m2: "M2",
-      m3: "M3",
-      v1: "V1",
-      v2: "V2",
-    };
-    const counts = { m1, m2, m3, v1, v2 };
-    const tourParts = Object.entries(counts)
-      .filter(([_, value]) => value > 0)
-      .map(([key, value]) => `${value}-${menuMap[key]}`);
-    const tour = tourParts.join(", ");
+    const validPaymentTypes = ["Gemide", "Cari", "Comp", "Komisyonsuz"];
+    if (!validPaymentTypes.includes(paymentType)) {
+      return res.status(400).json({ error: "Geçersiz paymentType" });
+    }
 
-    const isValidPaymentType = (val: any): val is PaymentType =>
-      ["Gemide", "Cari", "Comp", "Komisyonsuz"].includes(val);
+    const companyRate = await prisma.companyRate.findUnique({
+      where: { id: companyRateId },
+    });
 
-    const paymentType: PaymentType = isValidPaymentType(rest.paymentType)
-      ? rest.paymentType
-      : "Gemide";
+    if (!companyRate) {
+      return res.status(400).json({ error: "Geçersiz companyRateId" });
+    }
+
+    const fullPrice =
+      (companyRate.m1 ?? 0) * (m1Count ?? 0) +
+      (companyRate.m2 ?? 0) * (m2Count ?? 0) +
+      (companyRate.m3 ?? 0) * (m3Count ?? 0) +
+      (companyRate.v1 ?? 0) * (v1Count ?? 0) +
+      (companyRate.v2 ?? 0) * (v2Count ?? 0);
+
+    const isoDate = new Date(date);
+    if (isNaN(isoDate.getTime())) {
+      return res.status(400).json({ error: "Geçersiz tarih formatı" });
+    }
 
     const updatedReservation = await prisma.reservation.update({
       where: { id },
       data: {
-        ...rest,
+        date: isoDate,
+        m1: m1Count ?? 0,
+        m2: m2Count ?? 0,
+        m3: m3Count ?? 0,
+        v1: v1Count ?? 0,
+        v2: v2Count ?? 0,
+        full: full ?? 0,
+        half: half ?? 0,
+        infant: infant ?? 0,
+        guide: guide ?? 0,
+        totalPerson: totalPerson ?? 0,
+        fullPrice,
+        tour: Array.isArray(tour) ? tour.join(",") : tour || "",
         paymentType,
-        m1,
-        m2,
-        m3,
-        v1,
-        v2,
-        full,
-        half,
-        infant,
-        guide,
-        totalPerson,
-        arrivalTransfer,
-        returnTransfer,
-        tour,
-        companyRateId,
+        description,
+        nationality,
+        companyRate: { connect: { id: companyRateId } },
+        resTaker: { connect: { id: resTakerId } },
+        authorized: { connect: { id: authorizedId } },
+        saloon: saloonId ? { connect: { id: saloonId } } : undefined,
+        resTable: resTableId ? { connect: { id: resTableId } } : undefined,
+        arrivalTransfer: arrivalTransfer || null,
+        returnTransfer: returnTransfer || null,
+        arrivalLocation: arrivalLocation || null,
+        returnLocation: returnLocation || null,
       },
     });
 
-    res.json(updatedReservation);
+    res.status(200).json(updatedReservation);
   } catch (error) {
-    console.error("Update reservation error:", error);
-    res.status(500).json({ error: "Reservation update failed" });
+    console.error("PUT /api/reservations/:id hatası:", error);
+    res.status(500).json({ error: "Sunucu hatası" });
   }
 });
+
 
 // DELETE /api/reservations/:id
 app.delete("/api/reservations/:id", async (req, res) => {
@@ -1280,7 +1312,7 @@ app.delete('/api/incomes/:id', async (req, res) => {
 
 // ============== REGISTER ==============
 
-app.get("/register", async (req, res) => {
+app.get("/api/register", async (req, res) => {
   try {
     const registers = await prisma.register.findMany({
       include: {
@@ -1300,7 +1332,7 @@ app.get("/register", async (req, res) => {
   }
 });
 
-app.post("/register", async (req, res) => {
+app.post("/api/register", async (req, res) => {
   try {
     const {
       ship,
@@ -1314,34 +1346,60 @@ app.post("/register", async (req, res) => {
       currency,
       description,
       receiptDate,
-      createdById,
+      createdByUsername, // frontend'den gelen username
     } = req.body;
+
+    if (!createdByUsername) {
+      return res.status(400).json({ error: "createdByUsername is required" });
+    }
+
+    const employee = await prisma.employee.findUnique({
+      where: { username: createdByUsername },
+    });
+
+    if (!employee) {
+      return res.status(404).json({ error: "Employee not found with given username" });
+    }
 
     const newRegister = await prisma.register.create({
       data: {
         ship,
-        reservationId,
-        clientId,
-        companyDebtId,
-        groupName,
+        reservationId: reservationId || null,
+        clientId: clientId || null,
+        companyDebtId: companyDebtId || null,
+        groupName: groupName || "",
         accountType,
         entry,
         out,
         currency,
         description,
         receiptDate: new Date(receiptDate),
-        createdById,
+        createdById: employee.id,
       },
     });
 
     res.status(201).json(newRegister);
-  } catch (error) {
-    console.error("Error creating register:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+  } catch (error: any) {
+    console.error("🔥 Error during POST /api/register");
+    console.error("📦 Request body:", req.body);
+
+    if (error.code === "P2002") {
+      // Prisma unique constraint violation
+      res.status(409).json({ error: "Unique constraint violation", details: error.meta });
+    } else if (error.code === "P2025") {
+      res.status(404).json({ error: "Record not found", details: error.meta });
+    } else {
+      res.status(500).json({
+        error: "Internal Server Error",
+        message: error.message,
+        stack: error.stack,
+      });
+    }
   }
 });
 
-app.put("/register/:id", async (req, res) => {
+
+app.put("/api/register/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -1384,7 +1442,7 @@ app.put("/register/:id", async (req, res) => {
   }
 });
 
-app.delete("/register/:id", async (req, res) => {
+app.delete("/api/register/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1398,7 +1456,6 @@ app.delete("/register/:id", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 
 // Sağlık testi

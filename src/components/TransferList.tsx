@@ -55,47 +55,52 @@ const TransferList = () => {
             </tr>
           </thead>
 
-          <tbody className="bg-white divide-y divide-gray-100">
+            <tbody className="bg-white divide-y divide-gray-100">
             {reservations.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-6 text-gray-500 italic text-sm">
-                  Kayıt bulunamadı.
-                </td>
+              <td colSpan={9} className="text-center py-6 text-gray-500 italic text-sm">
+                Kayıt bulunamadı.
+              </td>
               </tr>
             ) : (
-              filteredReservations.map((reservation) => {
+              filteredReservations
+              .filter(
+                (reservation) =>
+                reservation.arrivalTransfer != null || reservation.returnTransfer != null
+              )
+              .map((reservation) => {
                 const company = reservation.companyRate?.company?.toLowerCase() || "";
                 const filterMatch = company.includes(filterByClient.toLowerCase());
 
                 return filterMatch ? (
-                  <tr
-                    key={reservation.id}
-                    className="hover:bg-gray-50 transition-colors duration-200 text-center"
+                <tr
+                  key={reservation.id}
+                  className="hover:bg-gray-50 transition-colors duration-200 text-center"
+                >
+                  <td className="px-4 py-2">{reservation.reservationNo || "-"}</td>
+                  <td className="px-4 py-2">{reservation.arrivalLocation || "-"}</td>
+                  <td className="px-4 py-2">{reservation.arrivalTransfer || "-"}</td>
+                  <td className="px-4 py-2">{reservation.returnLocation || "-"}</td>
+                  <td className="px-4 py-2">{reservation.returnTransfer || "-"}</td>
+                  <td className="px-4 py-2">{reservation.totalPerson || "-"}</td>
+                  <td className="px-4 py-2">{reservation.companyRate?.company || "-"}</td>
+                  <td
+                  className="px-4 py-2 max-w-xs truncate"
+                  title={reservation.description || "-"}
                   >
-                    <td className="px-4 py-2">{reservation.reservationNo || "-"}</td>
-                    <td className="px-4 py-2">{reservation.arrivalLocation || "-"}</td>
-                    <td className="px-4 py-2">{reservation.arrivalTransfer || "-"}</td>
-                    <td className="px-4 py-2">{reservation.returnLocation || "-"}</td>
-                    <td className="px-4 py-2">{reservation.returnTransfer || "-"}</td>
-                    <td className="px-4 py-2">{reservation.totalPerson || "-"}</td>
-                    <td className="px-4 py-2">{reservation.companyRate?.company || "-"}</td>
-                    <td
-                      className="px-4 py-2 max-w-xs truncate"
-                      title={reservation.description || "-"}
-                    >
-                      {reservation.description || "-"}
-                    </td>
-                    <td
-                      className="px-4 py-2 max-w-xs truncate"
-                      title={reservation.description || "-"}
-                    >
-                      {reservation.description || "-"}
-                    </td>
-                  </tr>
+                  {reservation.description || "-"}
+                  </td>
+                  <td
+                  className="px-4 py-2 max-w-xs truncate"
+                  title={reservation.description || "-"}
+                  >
+                  {reservation.description || "-"}
+                  </td>
+                </tr>
                 ) : null;
               })
             )}
-          </tbody>
+            </tbody>
         </table>
       </div>
     </div>

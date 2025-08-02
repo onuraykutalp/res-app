@@ -22,6 +22,8 @@ import OutcomeGroupPage from './pages/OutcomeGroupPage';
 import OutcomePage from './pages/OutcomePage';
 import IncomePage from './pages/IncomePage';
 import CompanyDebtPage from './pages/CompanyDebtPage';
+import RegisterPage from './pages/RegisterPage';
+import RegisterDaily from './components/RegisterDaily';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
@@ -67,6 +69,8 @@ export function App() {
           <Route path="incomes" element={<IncomePage />} />
           <Route path="outcome-groups" element={<OutcomeGroupPage />} />
           <Route path="outcomes" element={<OutcomePage />} />
+          <Route path="register" element={<RegisterPage />} />
+          <Route path="register-daily" element={<RegisterDaily />} />
         </Route>
       </Routes>
     </Router>
